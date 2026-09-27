@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-inter: 'Inter', sans-serif;
+  --color-coral-50: #FFF5F5;
+  --color-coral-100: #FFE0E0;
+  --color-coral-200: #FFC2C2;
+  --color-coral-300: #FF9999;
+  --color-coral-400: #FF7070;
+  --color-coral-500: #FF6B6B;
+  --color-coral-600: #E84545;
+  --color-coral-700: #C62828;
+  --color-navy-50: #F0F4FF;
+  --color-navy-100: #DBE4FF;
+  --color-navy-200: #BAC8FF;
+  --color-navy-300: #91A7FF;
+  --color-navy-400: #748FFC;
+  --color-navy-500: #5C7CFA;
+  --color-navy-600: #4C6EF5;
+  --color-navy-700: #4263EB;
+  --color-navy-800: #3B5BDB;
+  --color-navy-900: #1E293B;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #FF6B6B #f1f1f1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
