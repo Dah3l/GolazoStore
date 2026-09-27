@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Product, ProductVariant, DeliveryZone, BusinessSettings, ProductImage } from '../types';
-import { Plus, Edit2, Trash2, LogOut, Package, Truck, Settings, Search, Upload, X, Save, ChevronDown, Image as ImageIcon, GripVertical } from 'lucide-react';
+import { Product, ProductVariant, DeliveryArea, BusinessSettings } from '../types';
+import { Plus, Edit2, Trash2, LogOut, Package, Truck, Settings, Search, Upload, X, Save, MapPin } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'products' | 'zones' | 'settings'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'delivery' | 'settings'>('products');
   const [products, setProducts] = useState<Product[]>([]);
-  const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [areas, setAreas] = useState<DeliveryArea[]>([]);
   const [settings, setSettings] = useState<BusinessSettings>({
     business_name: '', whatsapp_number: '', email: '', address: '', description: '', instagram: '', facebook: '', telegram: ''
   });
   const [searchProduct, setSearchProduct] = useState('');
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [showZoneModal, setShowZoneModal] = useState(false);
-  const [editingZone, setEditingZone] = useState<DeliveryZone | null>(null);
+  const [showAreaModal, setShowAreaModal] = useState(false);
+  const [editingArea, setEditingArea] = useState<DeliveryArea | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Product form
@@ -31,23 +31,23 @@ const AdminDashboard: React.FC = () => {
   
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
-  // Zone form
-  const [zForm, setZForm] = useState({ name: '', price: '' });
+  // Area form
+  const [aForm, setAForm] = useState({ nombre: '' });
+  const [newPlace, setNewPlace] = useState({ nombre: '', precio: '' });
 
   useEffect(() => {
     checkAuth();
     loadAll();
   }, []);
 
-  // Bloquear scroll del body cuando los modales están abiertos
   useEffect(() => {
-    if (showProductModal || showZoneModal) {
+    if (showProductModal || showAreaModal) {
       document.body.style.overflow = 'hidden';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showProductModal, showZoneModal]);
+  }, [showProductModal, showAreaModal]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -56,7 +56,7 @@ const AdminDashboard: React.FC = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([loadProducts(), loadZones(), loadSettings()]);
+    await Promise.all([loadProducts(), loadAreas(), loadSettings()]);
     setLoading(false);
   };
 
@@ -68,9 +68,26 @@ const AdminDashboard: React.FC = () => {
     if (data) setProducts(data);
   };
 
-  const loadZones = async () => {
-    const { data } = await supabase.from('delivery_zones').select('*').order('name');
-    if (data) setZones(data);
+  const loadAreas = async () => {
+    const { data } = await supabase
+      .from('delivery_areas')
+      .select(`
+        id,
+        nombre,
+        lugares:delivery_places(id, nombre, precio)
+      `)
+      .order('nombre');
+    
+    if (data) {
+      setAreas(data.map(area => ({
+        id: area.id,
+        nombre: area.nombre,
+        lugares: (area.lugares as any[]).map(lugar => ({
+          nombre: lugar.nombre,
+          precio: lugar.precio
+        }))
+      })));
+    }
   };
 
   const loadSettings = async () => {
@@ -83,7 +100,7 @@ const AdminDashboard: React.FC = () => {
     navigate('/admin/login');
   };
 
-  // Product CRUD
+  // ========== PRODUCT CRUD ==========
   const openNewProduct = () => {
     setEditingProduct(null);
     setPForm({ name: '', team: '', price: '', original_price: '', image_url: '', is_preorder: false, delivery_days: '' });
@@ -101,9 +118,7 @@ const AdminDashboard: React.FC = () => {
       delivery_days: p.delivery_days ? String(p.delivery_days) : ''
     });
     setPVariants(p.variants?.map(v => ({ player_name: v.player_name, sizes: v.sizes, stock: v.stock })) || []);
-    // Cargar imágenes existentes
     const images = p.images?.sort((a, b) => a.display_order - b.display_order).map(img => ({ url: img.image_url })) || [];
-    // Si no hay imágenes en la tabla nueva, usar la imagen legacy
     if (images.length === 0 && p.image_url) {
       images.push({ url: p.image_url });
     }
@@ -118,7 +133,6 @@ const AdminDashboard: React.FC = () => {
     setSaving(true);
     
     try {
-      // Usar la primera imagen como image_url (compatibilidad)
       const mainImageUrl = productImages.length > 0 ? productImages[0].url : pForm.image_url;
       
       const productData = {
@@ -137,7 +151,6 @@ const AdminDashboard: React.FC = () => {
         if (error) { alert('Error: ' + error.message); setSaving(false); return; }
         productId = editingProduct.id;
         await supabase.from('product_variants').delete().eq('product_id', productId);
-        // Eliminar imágenes anteriores
         await supabase.from('product_images').delete().eq('product_id', productId);
       } else {
         const { data, error } = await supabase.from('products').insert(productData).select().single();
@@ -145,7 +158,6 @@ const AdminDashboard: React.FC = () => {
         productId = data.id;
       }
 
-      // Save variants (only if not preorder)
       if (!pForm.is_preorder) {
         for (const v of pVariants) {
           await supabase.from('product_variants').insert({
@@ -157,7 +169,6 @@ const AdminDashboard: React.FC = () => {
         }
       }
       
-      // Save images
       for (let i = 0; i < productImages.length; i++) {
         await supabase.from('product_images').insert({
           product_id: productId,
@@ -179,10 +190,8 @@ const AdminDashboard: React.FC = () => {
   const deleteProduct = async (id: string) => {
     if (!confirm('¿Eliminar este producto?')) return;
     
-    // Obtener las imágenes del producto antes de eliminarlo
     const product = products.find(p => p.id === id);
     if (product && product.images) {
-      // Eliminar imágenes del storage bucket
       const fileNames = product.images
         .map(img => {
           const urlParts = img.image_url.split('/');
@@ -199,7 +208,6 @@ const AdminDashboard: React.FC = () => {
       }
     }
     
-    // Eliminar de la base de datos
     await supabase.from('product_images').delete().eq('product_id', id);
     await supabase.from('product_variants').delete().eq('product_id', id);
     await supabase.from('products').delete().eq('id', id);
@@ -241,13 +249,11 @@ const AdminDashboard: React.FC = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Validar tipo de archivo
         if (!file.type.startsWith('image/')) {
           alert(`El archivo ${file.name} no es una imagen válida`);
           continue;
         }
         
-        // Validar tamaño (máximo 5MB)
         if (file.size > 5 * 1024 * 1024) {
           alert(`La imagen ${file.name} no debe superar los 5MB`);
           continue;
@@ -273,10 +279,8 @@ const AdminDashboard: React.FC = () => {
         newImages.push({ url: urlData.publicUrl });
       }
       
-      // Agregar las nuevas imágenes a la lista
       setProductImages(prev => [...prev, ...newImages]);
       
-      // Actualizar también el campo legacy image_url con la primera imagen
       if (newImages.length > 0 && !pForm.image_url) {
         setPForm(prev => ({ ...prev, image_url: newImages[0].url }));
       }
@@ -289,7 +293,6 @@ const AdminDashboard: React.FC = () => {
       alert('Error inesperado al subir las imágenes');
     } finally {
       setUploading(false);
-      // Resetear el input para permitir subir las mismas imágenes de nuevo
       e.target.value = '';
     }
   };
@@ -297,31 +300,21 @@ const AdminDashboard: React.FC = () => {
   const removeImage = async (index: number) => {
     const imageToRemove = productImages[index];
     
-    // Eliminar del storage bucket
     if (imageToRemove && imageToRemove.url) {
       try {
-        // Extraer el path del archivo desde la URL
         const urlParts = imageToRemove.url.split('/');
         const fileName = urlParts[urlParts.length - 1];
         
         if (fileName) {
-          const { error } = await supabase.storage
-            .from('products')
-            .remove([fileName]);
-          
-          if (error) {
-            console.error('Error eliminando imagen del storage:', error);
-          }
+          await supabase.storage.from('products').remove([fileName]);
         }
       } catch (err) {
-        console.error('Error al eliminar imagen:', err);
+        console.error('Error eliminando imagen del storage:', err);
       }
     }
     
-    // Eliminar de la lista local
     setProductImages(prev => prev.filter((_, i) => i !== index));
     
-    // Si era la primera imagen, actualizar image_url
     if (index === 0 && productImages.length > 1) {
       setPForm(prev => ({ ...prev, image_url: productImages[1].url }));
     } else if (productImages.length === 1) {
@@ -335,43 +328,100 @@ const AdminDashboard: React.FC = () => {
     const [moved] = newImages.splice(fromIndex, 1);
     newImages.splice(toIndex, 0, moved);
     setProductImages(newImages);
-    // Actualizar image_url con la primera imagen
     if (toIndex === 0 || fromIndex === 0) {
       setPForm(prev => ({ ...prev, image_url: newImages[0].url }));
     }
   };
 
-  // Zone CRUD
-  const openNewZone = () => {
-    setEditingZone(null);
-    setZForm({ name: '', price: '' });
-    setShowZoneModal(true);
+  // ========== DELIVERY AREAS CRUD ==========
+  const openNewArea = () => {
+    setEditingArea(null);
+    setAForm({ nombre: '' });
+    setShowAreaModal(true);
   };
 
-  const openEditZone = (z: DeliveryZone) => {
-    setEditingZone(z);
-    setZForm({ name: z.name, price: String(z.price) });
-    setShowZoneModal(true);
+  const openEditArea = (area: DeliveryArea) => {
+    setEditingArea(area);
+    setAForm({ nombre: area.nombre });
+    setShowAreaModal(true);
   };
 
-  const saveZone = async () => {
-    if (!zForm.name || !zForm.price) return;
-    if (editingZone) {
-      await supabase.from('delivery_zones').update({ name: zForm.name, price: Number(zForm.price) }).eq('id', editingZone.id);
-    } else {
-      await supabase.from('delivery_zones').insert({ name: zForm.name, price: Number(zForm.price) });
+  const saveArea = async () => {
+    if (!aForm.nombre) return;
+    
+    try {
+      if (editingArea) {
+        const { error } = await supabase
+          .from('delivery_areas')
+          .update({ nombre: aForm.nombre })
+          .eq('id', editingArea.id);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('delivery_areas')
+          .insert({ nombre: aForm.nombre });
+        
+        if (error) throw error;
+      }
+      
+      setShowAreaModal(false);
+      await loadAreas();
+    } catch (error: any) {
+      alert('Error: ' + error.message);
     }
-    setShowZoneModal(false);
-    loadZones();
   };
 
-  const deleteZone = async (id: string) => {
-    if (!confirm('¿Eliminar esta zona?')) return;
-    await supabase.from('delivery_zones').delete().eq('id', id);
-    loadZones();
+  const deleteArea = async (id: string) => {
+    if (!confirm('¿Eliminar esta localidad y todos sus puntos de entrega?')) return;
+    
+    try {
+      await supabase.from('delivery_places').delete().eq('area_id', id);
+      await supabase.from('delivery_areas').delete().eq('id', id);
+      await loadAreas();
+    } catch (error: any) {
+      alert('Error: ' + error.message);
+    }
   };
 
-  // Save settings
+  const addPlace = async (areaId: string) => {
+    if (!newPlace.nombre || !newPlace.precio) return;
+    
+    try {
+      const { error } = await supabase
+        .from('delivery_places')
+        .insert({
+          area_id: areaId,
+          nombre: newPlace.nombre,
+          precio: Number(newPlace.precio)
+        });
+      
+      if (error) throw error;
+      
+      setNewPlace({ nombre: '', precio: '' });
+      await loadAreas();
+    } catch (error: any) {
+      alert('Error: ' + error.message);
+    }
+  };
+
+  const deletePlace = async (areaId: string, placeName: string) => {
+    if (!confirm(`¿Eliminar el punto de entrega "${placeName}"?`)) return;
+    
+    try {
+      await supabase
+        .from('delivery_places')
+        .delete()
+        .eq('area_id', areaId)
+        .eq('nombre', placeName);
+      
+      await loadAreas();
+    } catch (error: any) {
+      alert('Error: ' + error.message);
+    }
+  };
+
+  // ========== SETTINGS ==========
   const saveSettings = async () => {
     const { error } = await supabase.from('business_settings').upsert({ id: settings.id || 'main', ...settings });
     if (error) { alert('Error: ' + error.message); return; }
@@ -415,7 +465,7 @@ const AdminDashboard: React.FC = () => {
         <div className="flex gap-1 bg-white rounded-xl p-1 border border-gray-200 w-fit">
           {[
             { id: 'products' as const, icon: Package, label: 'Productos' },
-            { id: 'zones' as const, icon: Truck, label: 'Envíos' },
+            { id: 'delivery' as const, icon: Truck, label: 'Entregas' },
             { id: 'settings' as const, icon: Settings, label: 'Config' },
           ].map(tab => (
             <button
@@ -512,33 +562,95 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Zones Tab */}
-        {activeTab === 'zones' && (
+        {/* Delivery Tab */}
+        {activeTab === 'delivery' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-navy-900 text-lg">Zonas de Entrega</h2>
-              <button onClick={openNewZone} className="flex items-center gap-2 px-4 py-2.5 bg-coral-500 hover:bg-coral-600 text-white rounded-xl text-sm font-medium transition-colors">
-                <Plus size={16} /> Nueva Zona
+              <h2 className="font-bold text-navy-900 text-lg">Localidades y Puntos de Entrega</h2>
+              <button onClick={openNewArea} className="flex items-center gap-2 px-4 py-2.5 bg-coral-500 hover:bg-coral-600 text-white rounded-xl text-sm font-medium transition-colors">
+                <Plus size={16} /> Nueva Localidad
               </button>
             </div>
-            <div className="grid gap-3">
-              {zones.map(z => (
-                <div key={z.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-navy-900">{z.name}</p>
-                    <p className="text-sm text-gray-500">{z.price} CUP</p>
+
+            <div className="space-y-4">
+              {areas.map(area => (
+                <div key={area.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  {/* Area Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <MapPin size={18} className="text-coral-500" />
+                      <h3 className="font-semibold text-navy-900">{area.nombre}</h3>
+                      <span className="text-xs text-gray-500">({area.lugares.length} puntos)</span>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => openEditArea(area)} className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
+                        <Edit2 size={15} />
+                      </button>
+                      <button onClick={() => deleteArea(area.id)} className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => openEditZone(z)} className="p-2 rounded-lg hover:bg-blue-50 text-blue-600">
-                      <Edit2 size={15} />
-                    </button>
-                    <button onClick={() => deleteZone(z.id)} className="p-2 rounded-lg hover:bg-red-50 text-red-500">
-                      <Trash2 size={15} />
-                    </button>
+
+                  {/* Places List */}
+                  <div className="p-4">
+                    {area.lugares.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {area.lugares.map((lugar, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                            <div>
+                              <span className="text-sm font-medium text-navy-900">{lugar.nombre}</span>
+                              <span className="text-xs text-gray-500 ml-2">{lugar.precio} CUP</span>
+                            </div>
+                            <button 
+                              onClick={() => deletePlace(area.id, lugar.nombre)}
+                              className="p-1 rounded hover:bg-red-50 text-red-500 transition-colors"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">No hay puntos de entrega</p>
+                    )}
+
+                    {/* Add Place Form */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-xs font-medium text-gray-600 mb-2">Agregar punto de entrega:</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newPlace.nombre}
+                          onChange={e => setNewPlace({...newPlace, nombre: e.target.value})}
+                          placeholder="Nombre del lugar"
+                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                        />
+                        <input
+                          type="number"
+                          value={newPlace.precio}
+                          onChange={e => setNewPlace({...newPlace, precio: e.target.value})}
+                          placeholder="Precio CUP"
+                          className="w-28 px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                        />
+                        <button
+                          onClick={() => addPlace(area.id)}
+                          disabled={!newPlace.nombre || !newPlace.precio}
+                          className="px-4 py-2 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Agregar
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
-              {zones.length === 0 && <p className="text-center py-8 text-gray-500">No hay zonas configuradas</p>}
+
+              {areas.length === 0 && (
+                <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-gray-200">
+                  No hay localidades configuradas
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -592,7 +704,6 @@ const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center overflow-y-auto" onClick={() => setShowProductModal(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-3xl max-h-[95vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
-            {/* Header */}
             <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
               <h3 className="font-bold text-navy-900 text-lg">{editingProduct ? 'Editar' : 'Nuevo'} Producto</h3>
               <button onClick={() => setShowProductModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -601,7 +712,6 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="p-5 space-y-5">
-              {/* Basic Info */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
                   <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
@@ -637,7 +747,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Images */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
                   <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
@@ -645,7 +754,6 @@ const AdminDashboard: React.FC = () => {
                   <span className="text-xs font-normal text-gray-500 ml-auto">{productImages.length} imagen{productImages.length !== 1 ? 'es' : ''}</span>
                 </h4>
                 
-                {/* Upload button */}
                 <label className={`w-full py-3 rounded-xl text-sm font-medium cursor-pointer transition-all flex items-center justify-center gap-2 border-2 border-dashed ${
                   uploading ? 'bg-gray-100 text-gray-500 border-gray-300' : 'bg-coral-50 text-coral-600 border-coral-200 hover:bg-coral-100'
                 }`}>
@@ -654,7 +762,6 @@ const AdminDashboard: React.FC = () => {
                   <input type="file" accept="image/*" multiple onChange={uploadImages} className="hidden" disabled={uploading} />
                 </label>
                 
-                {/* Image gallery */}
                 {productImages.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-500">💡 La primera imagen será la principal. Usa las flechas para reordenar.</p>
@@ -672,7 +779,6 @@ const AdminDashboard: React.FC = () => {
                               <button
                                 onClick={() => moveImage(index, index - 1)}
                                 className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
-                                title="Mover izquierda"
                               >
                                 ←
                               </button>
@@ -681,7 +787,6 @@ const AdminDashboard: React.FC = () => {
                               <button
                                 onClick={() => moveImage(index, index + 1)}
                                 className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
-                                title="Mover derecha"
                               >
                                 →
                               </button>
@@ -689,7 +794,6 @@ const AdminDashboard: React.FC = () => {
                             <button
                               onClick={() => removeImage(index)}
                               className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                              title="Eliminar imagen"
                             >
                               <X size={14} />
                             </button>
@@ -699,11 +803,8 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
-                <p className="text-xs text-gray-500">💡 Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.</p>
               </div>
 
-              {/* Availability */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
                   <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
@@ -728,7 +829,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Variants - Solo visible si NO es por encargo */}
               {!pForm.is_preorder ? (
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
@@ -737,7 +837,6 @@ const AdminDashboard: React.FC = () => {
                     <span className="text-xs font-normal text-gray-500 ml-auto">{pVariants.length} agregada{pVariants.length !== 1 ? 's' : ''}</span>
                   </h4>
 
-                  {/* Existing variants */}
                   {pVariants.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {pVariants.map((v, i) => (
@@ -764,7 +863,6 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Add new variant */}
                   <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 space-y-3">
                     <p className="text-xs font-medium text-gray-600">Agregar nueva variante:</p>
                     
@@ -841,7 +939,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
               )}
 
-              {/* Save button */}
               <button 
                 onClick={saveProduct}
                 disabled={!pForm.name || !pForm.price || saving}
@@ -863,27 +960,23 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Zone Modal */}
-      {showZoneModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setShowZoneModal(false)}>
+      {/* Area Modal */}
+      {showAreaModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setShowAreaModal(false)}>
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative bg-white rounded-2xl w-full max-w-sm p-6 animate-fade-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-navy-900">{editingZone ? 'Editar' : 'Nueva'} Zona</h3>
-              <button onClick={() => setShowZoneModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
+              <h3 className="font-bold text-navy-900">{editingArea ? 'Editar' : 'Nueva'} Localidad</h3>
+              <button onClick={() => setShowAreaModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Nombre</label>
-                <input value={zForm.name} onChange={e => setZForm({...zForm, name: e.target.value})}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="La Habana" />
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Nombre de la localidad</label>
+                <input value={aForm.nombre} onChange={e => setAForm({nombre: e.target.value})}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
+                  placeholder="Ej: Playa, Vedado, etc." />
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Precio (CUP)</label>
-                <input type="number" value={zForm.price} onChange={e => setZForm({...zForm, price: e.target.value})}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" placeholder="200" />
-              </div>
-              <button onClick={saveZone}
+              <button onClick={saveArea}
                 className="w-full py-3 bg-coral-500 hover:bg-coral-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2">
                 <Save size={16} /> Guardar
               </button>
