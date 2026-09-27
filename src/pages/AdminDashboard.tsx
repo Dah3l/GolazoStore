@@ -39,6 +39,16 @@ const AdminDashboard: React.FC = () => {
     loadAll();
   }, []);
 
+  // Bloquear scroll del body cuando los modales están abiertos
+  useEffect(() => {
+    if (showProductModal || showZoneModal) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showProductModal, showZoneModal]);
+
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) navigate('/admin/login');

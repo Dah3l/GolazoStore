@@ -28,6 +28,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
     loadZones();
   }, []);
 
+  // Bloquear scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const loadZones = async () => {
     try {
       const { data } = await supabase.from('delivery_zones').select('*').order('name');
