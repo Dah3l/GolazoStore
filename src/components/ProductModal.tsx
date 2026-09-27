@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductVariant } from '../types';
 import { useCart } from '../context/CartContext';
-import { X, ChevronLeft, Check, User, Ruler, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, Check, User, Ruler, ChevronRight, Maximize2 } from 'lucide-react';
 
 interface ProductModalProps {
   product: Product;
@@ -14,6 +14,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [added, setAdded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const hasSale = product.original_price && product.original_price > product.price;
   const variants = product.variants || [];
@@ -31,6 +32,21 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
+
+  // Cerrar fullscreen con ESC
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (fullscreenImage) {
+          setFullscreenImage(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [fullscreenImage, onClose]);
 
   const handleAddToCart = () => {
     if (selectedVariant && selectedSize) {
@@ -73,6 +89,56 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const openFullscreen = () => {
+    if (images[currentImageIndex]) {
+      setFullscreenImage(images[currentImageIndex]);
+    }
+  };
+
+  // Fullscreen Image Modal
+  if (fullscreenImage) {
+    return (
+      <div 
+        className="fixed inset-0 z-[200] bg-black flex items-center justify-center"
+        onClick={() => setFullscreenImage(null)}
+      >
+        <button
+          onClick={() => setFullscreenImage(null)}
+          className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+        >
+          <X size={24} />
+        </button>
+        
+        <img 
+          src={fullscreenImage} 
+          alt={product.name}
+          className="max-w-full max-h-full object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+        
+        {hasMultipleImages && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); prevImage(); setFullscreenImage(images[currentImageIndex - 1 < 0 ? images.length - 1 : currentImageIndex - 1]); }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); nextImage(); setFullscreenImage(images[(currentImageIndex + 1) % images.length]); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronRight size={24} />
+            </button>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 text-white text-sm font-medium rounded-full">
+              {images.indexOf(fullscreenImage) + 1} / {images.length}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -80,35 +146,37 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
         className="relative bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-2.5 flex items-center justify-between z-20 flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        {/* Header - Mejorado para no desbordarse */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between z-20 flex-shrink-0 safe-area-top">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 mr-2">
             {selectedVariant && (
               <button
                 onClick={() => { setSelectedVariant(null); setSelectedSize(''); }}
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
               >
-                <ChevronLeft size={18} className="text-gray-600" />
+                <ChevronLeft size={16} className="sm:hidden text-gray-600" />
+                <ChevronLeft size={18} className="hidden sm:block text-gray-600" />
               </button>
             )}
-            <div className="min-w-0 flex-1">
-              <h2 className="font-bold text-navy-900 text-sm truncate">{product.name}</h2>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <h2 className="font-bold text-navy-900 text-xs sm:text-sm truncate leading-tight">{product.name}</h2>
               {selectedVariant && (
-                <p className="text-xs text-coral-600 font-medium truncate">
+                <p className="text-[10px] sm:text-xs text-coral-600 font-medium truncate leading-tight mt-0.5">
                   {selectedVariant.player_name}
                 </p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
-            <X size={18} className="text-gray-500" />
+          <button onClick={onClose} className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+            <X size={16} className="sm:hidden text-gray-500" />
+            <X size={18} className="hidden sm:block text-gray-500" />
           </button>
         </div>
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          {/* Image Carousel - Compacto */}
-          <div className="aspect-[4/3] sm:aspect-square bg-gray-50 relative overflow-hidden">
+          {/* Image Carousel - Más grande */}
+          <div className="aspect-[3/4] sm:aspect-[4/5] bg-gray-50 relative overflow-hidden cursor-pointer" onClick={openFullscreen}>
             {images.length > 0 ? (
               <>
                 <img 
@@ -116,6 +184,15 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                   alt={`${product.name} - Imagen ${currentImageIndex + 1}`} 
                   className="w-full h-full object-cover transition-opacity duration-300"
                 />
+                
+                {/* Botón de pantalla completa */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); openFullscreen(); }}
+                  className="absolute top-2 right-2 p-1.5 bg-black/40 hover:bg-black/60 rounded-lg text-white transition-colors"
+                  title="Ver en pantalla completa"
+                >
+                  <Maximize2 size={14} />
+                </button>
                 
                 {/* Navigation arrows */}
                 {hasMultipleImages && (
@@ -207,8 +284,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
             )}
           </div>
 
-          {/* Content - Compacto */}
-          <div className="px-4 py-3 pb-24 sm:pb-4">
+          {/* Content - Más compacto */}
+          <div className="px-4 py-3 pb-20 sm:pb-4">
             {added ? (
               <div className="text-center py-6 animate-fade-in">
                 <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -263,19 +340,19 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                           }
                         }}
                         disabled={isOutOfStock}
-                        className={`p-2.5 rounded-lg text-xs font-medium text-left transition-all border ${
+                        className={`p-2 rounded-lg text-xs font-medium text-left transition-all border ${
                           isOutOfStock
                             ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60'
                             : 'bg-gray-50 border-gray-200 text-gray-700 active:scale-95 active:bg-coral-50 active:border-coral-300'
                         }`}
                       >
-                        <div className="font-semibold text-sm">{variant.player_name}</div>
+                        <div className="font-semibold text-xs sm:text-sm truncate">{variant.player_name}</div>
                         {isOutOfStock ? (
                           <span className="block text-[10px] text-red-500 mt-0.5">Sin stock</span>
                         ) : variant.stock <= 3 ? (
                           <span className="block text-[10px] text-amber-600 mt-0.5">⚡ ¡Últimas {variant.stock}!</span>
                         ) : (
-                          <span className="block text-[10px] text-gray-400 mt-0.5">{variant.stock} disponibles</span>
+                          <span className="block text-[10px] text-gray-400 mt-0.5">{variant.stock} disp.</span>
                         )}
                       </button>
                     );
@@ -289,7 +366,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                   <Ruler size={14} className="text-coral-500" />
                   <p className="font-medium text-navy-900 text-sm">2. Elige talla:</p>
                 </div>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="text-xs text-gray-500 mb-2 truncate">
                   Jugador: <span className="font-semibold text-navy-800">{selectedVariant.player_name}</span>
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -319,7 +396,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
 
         {/* Sticky Footer - Botón de agregar al carrito */}
         {!added && selectedSize && (
-          <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] safe-area-bottom">
             <button
               onClick={!hasVariants ? handleAddNoVariants : handleAddToCart}
               disabled={hasVariants && cartQty >= selectedVariant!.stock}
