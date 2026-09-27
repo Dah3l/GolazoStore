@@ -14,7 +14,6 @@ const Home: React.FC = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleCheckout = () => {
     setCartOpen(false);
@@ -23,7 +22,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <Header onCartOpen={() => setCartOpen(true)} onMenuOpen={() => setMenuOpen(!menuOpen)} menuOpen={menuOpen} />
+      <Header onCartOpen={() => setCartOpen(true)} />
       <Hero />
       <Catalog onSelectProduct={setSelectedProduct} />
       <InfoSection />
