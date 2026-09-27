@@ -17,7 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
   const hasSale = product.original_price && product.original_price > product.price;
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:border-coral-100 transition-all duration-300 hover:-translate-y-1">
+    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:border-coral-100 transition-all duration-300 active:scale-[0.98]">
       {/* Image */}
       <div
         className="relative aspect-square bg-gray-50 cursor-pointer overflow-hidden"
@@ -31,53 +31,54 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
           alt={product.name}
           className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setImgLoaded(true)}
+          loading="lazy"
         />
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+        <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1.5">
           {product.is_preorder && (
-            <span className="px-2.5 py-1 bg-navy-900/90 text-white text-xs font-medium rounded-lg backdrop-blur-sm">
-              🕐 Por encargo
+            <span className="px-2 py-1 bg-navy-900/90 text-white text-[10px] sm:text-xs font-medium rounded-lg backdrop-blur-sm">
+              🕐 Encargo
             </span>
           )}
           {hasSale && (
-            <span className="px-2.5 py-1 bg-coral-500 text-white text-xs font-bold rounded-lg">
+            <span className="px-2 py-1 bg-coral-500 text-white text-[10px] sm:text-xs font-bold rounded-lg shadow-sm">
               🔥 OFERTA
             </span>
           )}
           {!product.is_preorder && totalStock <= 5 && totalStock > 0 && (
-            <span className="px-2.5 py-1 bg-amber-500 text-white text-xs font-medium rounded-lg">
-              ⚡ Últimas {totalStock}
+            <span className="px-2 py-1 bg-amber-500 text-white text-[10px] sm:text-xs font-medium rounded-lg">
+              ⚡ ¡Últimas {totalStock}!
             </span>
           )}
         </div>
 
         {inCart && (
-          <div className="absolute top-3 right-3 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
-            <Check size={14} className="text-white" />
+          <div className="absolute top-2 right-2 w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+            <Check size={12} className="text-white" />
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-navy-900 text-sm mb-1 line-clamp-1">{product.name}</h3>
-        <p className="text-xs text-gray-500 mb-3 line-clamp-1">{product.team}</p>
+      <div className="p-3 sm:p-4">
+        <h3 className="font-semibold text-navy-900 text-xs sm:text-sm mb-0.5 line-clamp-1">{product.name}</h3>
+        <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-1">{product.team}</p>
 
         {/* Price */}
-        <div className="mb-3">
+        <div className="mb-2">
           {hasSale ? (
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold text-coral-600">${product.price} USD</span>
-              <span className="text-sm text-gray-400 line-through">${product.original_price} USD</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base sm:text-lg font-bold text-coral-600">${product.price}</span>
+              <span className="text-xs text-gray-400 line-through">${product.original_price}</span>
             </div>
           ) : (
-            <span className="text-lg font-bold text-navy-900">${product.price} USD</span>
+            <span className="text-base sm:text-lg font-bold text-navy-900">${product.price} USD</span>
           )}
         </div>
 
         {/* Variant info */}
-        <div className="text-xs text-gray-500 mb-3 space-y-0.5">
+        <div className="text-[10px] sm:text-xs text-gray-500 mb-2.5 space-y-0.5">
           {product.variants && product.variants.length > 0 && (
             <p>* {product.variants.length} jugador{product.variants.length > 1 ? 'es' : ''}</p>
           )}
@@ -89,16 +90,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
         {/* Button */}
         <button
           onClick={() => onSelect(product)}
-          className={`w-full py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+          className={`w-full py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-95 ${
             product.is_preorder
               ? 'bg-navy-50 text-navy-700 hover:bg-navy-100 border border-navy-200'
-              : 'bg-coral-500 text-white hover:bg-coral-600 shadow-sm hover:shadow-md'
+              : 'bg-coral-500 text-white hover:bg-coral-600 shadow-sm'
           }`}
         >
           {product.is_preorder ? (
-            <><Clock size={15} /> Encargo</>
+            <><Clock size={13} /> Encargo</>
           ) : (
-            <><ShoppingBag size={15} /> Elegir</>
+            <><ShoppingBag size={13} /> Elegir</>
           )}
         </button>
       </div>

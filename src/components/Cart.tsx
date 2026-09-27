@@ -17,20 +17,20 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
     <div className="fixed inset-0 z-[90]" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl animate-slide-up sm:animate-fade-in"
+        className="absolute right-0 top-0 h-full w-full sm:max-w-md bg-white shadow-2xl animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <ShoppingBag size={20} className="text-coral-500" />
-            <h2 className="font-bold text-navy-900 text-lg">Mi Carrito</h2>
-            <span className="px-2 py-0.5 bg-coral-100 text-coral-700 text-xs font-bold rounded-full">
+            <ShoppingBag size={18} className="text-coral-500" />
+            <h2 className="font-bold text-navy-900 text-base sm:text-lg">Mi Carrito</h2>
+            <span className="px-1.5 py-0.5 bg-coral-100 text-coral-700 text-[10px] sm:text-xs font-bold rounded-full">
               {items.length}
             </span>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <X size={20} className="text-gray-500" />
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors active:scale-95">
+            <X size={18} className="text-gray-500" />
           </button>
         </div>
 
