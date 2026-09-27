@@ -140,43 +140,41 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-slide-up"
+        className="relative bg-white w-full max-w-[400px] sm:max-w-[480px] max-h-[90vh] rounded-2xl overflow-hidden flex flex-col animate-fade-in shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header - Mejorado para no desbordarse */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between z-20 flex-shrink-0 safe-area-top">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 mr-2">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
             {selectedVariant && (
               <button
                 onClick={() => { setSelectedVariant(null); setSelectedSize(''); }}
-                className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
               >
-                <ChevronLeft size={16} className="sm:hidden text-gray-600" />
-                <ChevronLeft size={18} className="hidden sm:block text-gray-600" />
+                <ChevronLeft size={18} className="text-gray-600" />
               </button>
             )}
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <h2 className="font-bold text-navy-900 text-xs sm:text-sm truncate leading-tight">{product.name}</h2>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-bold text-navy-900 text-sm truncate">{product.name}</h2>
               {selectedVariant && (
-                <p className="text-[10px] sm:text-xs text-coral-600 font-medium truncate leading-tight mt-0.5">
+                <p className="text-xs text-coral-600 font-medium truncate">
                   {selectedVariant.player_name}
                 </p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
-            <X size={16} className="sm:hidden text-gray-500" />
-            <X size={18} className="hidden sm:block text-gray-500" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+            <X size={18} className="text-gray-500" />
           </button>
         </div>
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          {/* Image Carousel - Más grande */}
-          <div className="aspect-[3/4] sm:aspect-[4/5] bg-gray-50 relative overflow-hidden cursor-pointer" onClick={openFullscreen}>
+          {/* Image Carousel */}
+          <div className="aspect-square bg-gray-50 relative overflow-hidden cursor-pointer" onClick={openFullscreen}>
             {images.length > 0 ? (
               <>
                 <img 
@@ -188,10 +186,10 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                 {/* Botón de pantalla completa */}
                 <button
                   onClick={(e) => { e.stopPropagation(); openFullscreen(); }}
-                  className="absolute top-2 right-2 p-1.5 bg-black/40 hover:bg-black/60 rounded-lg text-white transition-colors"
+                  className="absolute top-3 right-3 p-2 bg-black/40 hover:bg-black/60 rounded-lg text-white transition-colors"
                   title="Ver en pantalla completa"
                 >
-                  <Maximize2 size={14} />
+                  <Maximize2 size={16} />
                 </button>
                 
                 {/* Navigation arrows */}
@@ -199,35 +197,35 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
                     >
-                      <ChevronLeft size={18} className="text-gray-700" />
+                      <ChevronLeft size={20} className="text-gray-700" />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
                     >
-                      <ChevronRight size={18} className="text-gray-700" />
+                      <ChevronRight size={20} className="text-gray-700" />
                     </button>
                   </>
                 )}
                 
                 {/* Image counter */}
                 {hasMultipleImages && (
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-black/60 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 text-white text-xs font-medium rounded-full backdrop-blur-sm">
                     {currentImageIndex + 1} / {images.length}
                   </div>
                 )}
                 
                 {/* Dots indicator */}
                 {hasMultipleImages && images.length <= 6 && (
-                  <div className="absolute bottom-2 right-2 flex gap-1">
+                  <div className="absolute bottom-3 right-3 flex gap-1">
                     {images.map((_, index) => (
                       <button
                         key={index}
                         onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
-                        className={`w-1.5 h-1.5 rounded-full transition-all ${
-                          index === currentImageIndex ? 'bg-white w-3' : 'bg-white/50'
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'
                         }`}
                       />
                     ))}
@@ -235,27 +233,27 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                 )}
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
                 Sin imagen
               </div>
             )}
             
             {hasSale && (
-              <div className="absolute top-2 left-2 px-2.5 py-1 bg-coral-500 text-white text-xs font-bold rounded-lg shadow-lg">
+              <div className="absolute top-3 left-3 px-3 py-1.5 bg-coral-500 text-white text-xs font-bold rounded-lg shadow-lg">
                 🔥 OFERTA
               </div>
             )}
           </div>
 
-          {/* Thumbnail strip - Compacto */}
+          {/* Thumbnail strip */}
           {hasMultipleImages && (
-            <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <div className="flex gap-2 overflow-x-auto">
                 {images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border-2 transition-all ${
+                    className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                       index === currentImageIndex ? 'border-coral-500 scale-105' : 'border-gray-200 opacity-70 hover:opacity-100'
                     }`}
                   >
@@ -266,68 +264,78 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
             </div>
           )}
 
-          {/* Price & Info - Compacto */}
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-xs text-gray-500 mb-1">{product.team}</p>
-            {hasSale ? (
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-coral-600">${product.price} USD</span>
-                <span className="text-sm text-gray-400 line-through">${product.original_price} USD</span>
-              </div>
-            ) : (
-              <span className="text-xl font-bold text-navy-900">${product.price} USD</span>
-            )}
-            {product.is_preorder && (
-              <p className="text-xs text-navy-600 mt-1 flex items-center gap-1">
-                <span>🕐</span> Por encargo · {product.delivery_days || 7} días
-              </p>
-            )}
-          </div>
-
-          {/* Content - Más compacto */}
-          <div className="px-4 py-3 pb-20 sm:pb-4">
-            {added ? (
-              <div className="text-center py-6 animate-fade-in">
-                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Check size={28} className="text-green-600" />
+          {/* Content */}
+          <div className="p-4 space-y-4">
+            {/* Price & Team */}
+            <div>
+              <p className="text-sm text-gray-500 mb-1">{product.team}</p>
+              {hasSale ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-coral-600">${product.price} USD</span>
+                  <span className="text-base text-gray-400 line-through">${product.original_price} USD</span>
                 </div>
-                <p className="font-semibold text-green-700 text-base">¡Agregado al carrito!</p>
-                <p className="text-xs text-gray-500 mt-1">
+              ) : (
+                <span className="text-2xl font-bold text-navy-900">${product.price} USD</span>
+              )}
+              {product.is_preorder && (
+                <p className="text-sm text-navy-600 mt-2 flex items-center gap-1.5">
+                  <span>🕐</span> Por encargo · Entrega en {product.delivery_days || 7} días
+                </p>
+              )}
+            </div>
+
+            {/* Selection */}
+            {added ? (
+              <div className="text-center py-8 animate-fade-in">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check size={32} className="text-green-600" />
+                </div>
+                <p className="font-semibold text-green-700 text-lg">¡Agregado al carrito!</p>
+                <p className="text-sm text-gray-500 mt-1">
                   {selectedVariant?.player_name} · Talla {selectedSize}
                 </p>
               </div>
             ) : !hasVariants ? (
               // SIN VARIANTES - Solo elegir talla
               <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Ruler size={14} className="text-coral-500" />
-                  <p className="font-medium text-navy-900 text-sm">Elige tu talla:</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <Ruler size={16} className="text-coral-500" />
+                  <p className="font-medium text-navy-900">Elige tu talla:</p>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {['S', 'M', 'L', 'XL', 'XXL'].map(size => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`min-w-[48px] px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      className={`min-w-[56px] px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
                         selectedSize === size
                           ? 'bg-coral-500 text-white border-coral-500 shadow-md'
-                          : 'bg-gray-50 border-gray-200 text-gray-700 active:scale-95'
+                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-coral-300'
                       }`}
                     >
                       {size}
                     </button>
                   ))}
                 </div>
+
+                {selectedSize && (
+                  <button
+                    onClick={handleAddNoVariants}
+                    className="w-full mt-4 py-3 rounded-xl bg-coral-500 hover:bg-coral-600 text-white font-semibold transition-all shadow-lg shadow-coral-500/30 active:scale-[0.98]"
+                  >
+                    Agregar al carrito 🛒
+                  </button>
+                )}
               </div>
             ) : !selectedVariant ? (
               // PASO 1: ELEGIR JUGADOR
               <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <User size={14} className="text-coral-500" />
-                  <p className="font-medium text-navy-900 text-sm">1. Elige jugador:</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <User size={16} className="text-coral-500" />
+                  <p className="font-medium text-navy-900">1. Elige jugador:</p>
                   <span className="text-xs text-gray-400 ml-auto">{variants.length} disponibles</span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
                   {variants.map(variant => {
                     const isOutOfStock = variant.stock === 0;
                     return (
@@ -340,19 +348,19 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
                           }
                         }}
                         disabled={isOutOfStock}
-                        className={`p-2 rounded-lg text-xs font-medium text-left transition-all border ${
+                        className={`p-3 rounded-lg text-sm font-medium text-left transition-all border ${
                           isOutOfStock
                             ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60'
-                            : 'bg-gray-50 border-gray-200 text-gray-700 active:scale-95 active:bg-coral-50 active:border-coral-300'
+                            : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-coral-300 hover:bg-coral-50'
                         }`}
                       >
-                        <div className="font-semibold text-xs sm:text-sm truncate">{variant.player_name}</div>
+                        <div className="font-semibold truncate">{variant.player_name}</div>
                         {isOutOfStock ? (
-                          <span className="block text-[10px] text-red-500 mt-0.5">Sin stock</span>
+                          <span className="block text-xs text-red-500 mt-0.5">Sin stock</span>
                         ) : variant.stock <= 3 ? (
-                          <span className="block text-[10px] text-amber-600 mt-0.5">⚡ ¡Últimas {variant.stock}!</span>
+                          <span className="block text-xs text-amber-600 mt-0.5">⚡ ¡Últimas {variant.stock}!</span>
                         ) : (
-                          <span className="block text-[10px] text-gray-400 mt-0.5">{variant.stock} disp.</span>
+                          <span className="block text-xs text-gray-400 mt-0.5">{variant.stock} disponibles</span>
                         )}
                       </button>
                     );
@@ -362,56 +370,53 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
             ) : (
               // PASO 2: ELEGIR TALLA
               <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Ruler size={14} className="text-coral-500" />
-                  <p className="font-medium text-navy-900 text-sm">2. Elige talla:</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <Ruler size={16} className="text-coral-500" />
+                  <p className="font-medium text-navy-900">2. Elige talla:</p>
                 </div>
-                <p className="text-xs text-gray-500 mb-2 truncate">
+                <p className="text-sm text-gray-500 mb-3">
                   Jugador: <span className="font-semibold text-navy-800">{selectedVariant.player_name}</span>
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {selectedVariant.sizes.map(size => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`min-w-[48px] px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      className={`min-w-[56px] px-4 py-2.5 rounded-lg text-sm font-medium transition-all border ${
                         selectedSize === size
                           ? 'bg-coral-500 text-white border-coral-500 shadow-md'
-                          : 'bg-gray-50 border-gray-200 text-gray-700 active:scale-95'
+                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-coral-300'
                       }`}
                     >
                       {size}
                     </button>
                   ))}
                 </div>
-                {cartQty > 0 && selectedSize && (
-                  <p className="text-xs text-gray-500 text-center bg-gray-50 rounded-lg py-1.5 mt-2">
-                    🛒 Ya tienes {cartQty} en el carrito
-                  </p>
+
+                {selectedSize && (
+                  <div className="mt-4 space-y-2">
+                    {cartQty > 0 && (
+                      <p className="text-sm text-gray-500 text-center bg-gray-50 rounded-lg py-2">
+                        🛒 Ya tienes {cartQty} en el carrito
+                      </p>
+                    )}
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={cartQty >= selectedVariant.stock}
+                      className={`w-full py-3 rounded-xl font-semibold text-white transition-all active:scale-[0.98] ${
+                        cartQty >= selectedVariant.stock
+                          ? 'bg-gray-300 cursor-not-allowed'
+                          : 'bg-coral-500 hover:bg-coral-600 shadow-lg shadow-coral-500/30'
+                      }`}
+                    >
+                      {cartQty >= selectedVariant.stock ? 'Stock máximo alcanzado' : 'Agregar al carrito 🛒'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
           </div>
         </div>
-
-        {/* Sticky Footer - Botón de agregar al carrito */}
-        {!added && selectedSize && (
-          <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] safe-area-bottom">
-            <button
-              onClick={!hasVariants ? handleAddNoVariants : handleAddToCart}
-              disabled={hasVariants && cartQty >= selectedVariant!.stock}
-              className={`w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] ${
-                hasVariants && cartQty >= selectedVariant!.stock
-                  ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                  : 'bg-coral-500 hover:bg-coral-600 text-white shadow-lg shadow-coral-500/30'
-              }`}
-            >
-              {hasVariants && cartQty >= selectedVariant!.stock 
-                ? 'Stock máximo alcanzado' 
-                : 'Agregar al carrito 🛒'}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
