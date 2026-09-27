@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductVariant } from '../types';
 import { useCart } from '../context/CartContext';
-import { X, ChevronLeft, Check, User, Ruler } from 'lucide-react';
+import { X, ChevronLeft, Check, User, Ruler, ChevronRight } from 'lucide-react';
 
 interface ProductModalProps {
   product: Product;
@@ -13,10 +13,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [added, setAdded] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const hasSale = product.original_price && product.original_price > product.price;
   const variants = product.variants || [];
   const hasVariants = variants.length > 0;
+  
+  // Obtener imágenes del producto
+  const images = product.images 
+    ? product.images.sort((a, b) => a.display_order - b.display_order).map(img => img.image_url)
+    : product.image_url ? [product.image_url] : [];
+  
+  const hasMultipleImages = images.length > 1;
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -57,6 +65,14 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
     }
   };
 
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -91,15 +107,87 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          {/* Image */}
-          <div className="aspect-square bg-gray-50 relative">
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+          {/* Image Carousel */}
+          <div className="aspect-square bg-gray-50 relative overflow-hidden">
+            {images.length > 0 ? (
+              <>
+                <img 
+                  src={images[currentImageIndex]} 
+                  alt={`${product.name} - Imagen ${currentImageIndex + 1}`} 
+                  className="w-full h-full object-cover transition-opacity duration-300"
+                />
+                
+                {/* Navigation arrows */}
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
+                    >
+                      <ChevronLeft size={20} className="text-gray-700" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
+                    >
+                      <ChevronRight size={20} className="text-gray-700" />
+                    </button>
+                  </>
+                )}
+                
+                {/* Image counter */}
+                {hasMultipleImages && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/60 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                    {currentImageIndex + 1} / {images.length}
+                  </div>
+                )}
+                
+                {/* Dots indicator */}
+                {hasMultipleImages && images.length <= 6 && (
+                  <div className="absolute bottom-3 right-3 flex gap-1">
+                    {images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                Sin imagen
+              </div>
+            )}
+            
             {hasSale && (
               <div className="absolute top-3 left-3 px-3 py-1.5 bg-coral-500 text-white text-xs font-bold rounded-lg shadow-lg">
                 🔥 OFERTA
               </div>
             )}
           </div>
+
+          {/* Thumbnail strip */}
+          {hasMultipleImages && (
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                      index === currentImageIndex ? 'border-coral-500 scale-105' : 'border-gray-200 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`Miniatura ${index + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Price & Info */}
           <div className="px-4 py-4 border-b border-gray-100">

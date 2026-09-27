@@ -4,11 +4,19 @@ export interface Product {
   team: string;
   price: number;
   original_price?: number;
-  image_url: string;
+  image_url: string; // Mantenido para compatibilidad
   is_preorder: boolean;
   delivery_days?: number;
   created_at?: string;
   variants?: ProductVariant[];
+  images?: ProductImage[]; // Nuevo: múltiples imágenes
+}
+
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  display_order: number;
 }
 
 export interface ProductVariant {
