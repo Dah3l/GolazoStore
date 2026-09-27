@@ -1,5 +1,5 @@
 -- ============================================
--- SCRIPT DE INICIALIZACIÓN - SPORTWEAR STORE
+-- SCRIPT DE INICIALIZACIÓN - GOLAZO STORE
 -- Ejecutar en Supabase SQL Editor
 -- ============================================
 
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS delivery_zones (
 -- 4. TABLA DE CONFIGURACIÓN DEL NEGOCIO
 CREATE TABLE IF NOT EXISTS business_settings (
   id TEXT PRIMARY KEY DEFAULT 'main',
-  business_name TEXT DEFAULT 'SportWear Store',
+  business_name TEXT DEFAULT 'Golazo Store',
   whatsapp_number TEXT DEFAULT '',
   email TEXT DEFAULT '',
   address TEXT DEFAULT '',
@@ -132,7 +132,7 @@ CREATE POLICY "Orders are viewable by authenticated users" ON orders
 
 -- 8. INSERTAR DATOS INICIALES DE EJEMPLO
 INSERT INTO business_settings (id, business_name, whatsapp_number, email, address, description)
-VALUES ('main', 'SportWear Store', '5351234567', 'contacto@sportwear.com', 'La Habana, Cuba', 'Las mejores camisetas deportivas al mejor precio. Envíos a toda Cuba.')
+VALUES ('main', 'Golazo Store', '5351234567', 'contacto@golazostore.com', 'La Habana, Cuba', 'Las mejores camisetas de fútbol al mejor precio. Envíos a toda Cuba. ⚽')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO delivery_zones (name, price) VALUES

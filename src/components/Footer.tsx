@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-9 h-9 bg-gradient-to-br from-coral-500 to-coral-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SW</span>
+                <span className="text-white text-sm">⚽</span>
               </div>
               <span className="font-bold text-lg">{settings.business_name}</span>
             </div>

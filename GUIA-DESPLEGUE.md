@@ -1,4 +1,4 @@
-# 🚀 Guía Completa de Despliegue - SportWear Store
+# 🚀 Guía Completa de Despliegue - Golazo Store
 
 Guía paso a paso para montar tu tienda online en **Cloudflare Pages** + **Supabase** desde cero.
 
@@ -42,7 +42,7 @@ Antes de empezar necesitas tener:
 3. Haz clic en **"New Project"**
 4. Completa el formulario:
    - **Organization**: Selecciona la tuya
-   - **Name**: `sportwear-store` (o el nombre que quieras)
+   - **Name**: `golazo-store` (o el nombre que quieras)
    - **Database Password**: ⚠️ **GUÁRDALA BIEN**, la necesitarás después
    - **Region**: Selecciona la más cercana a tus clientes (ej: `US East`)
    - **Pricing Plan**: Free (gratis)
@@ -102,8 +102,8 @@ Antes de empezar necesitas tener:
 
 Si tienes el proyecto en GitHub:
 ```bash
-git clone https://github.com/TU_USUARIO/sportwear-store.git
-cd sportwear-store
+git clone https://github.com/TU_USUARIO/golazo-store.git
+cd golazo-store
 ```
 
 Si no, simplemente descarga los archivos y colócalos en una carpeta.
@@ -157,7 +157,7 @@ npm run typecheck
 ### Estructura del proyecto:
 
 ```
-sportwear-store/
+golazo-store/
 ├── src/
 │   ├── components/       # Componentes reutilizables
 │   │   ├── Header.tsx    # Barra superior con carrito
@@ -206,7 +206,7 @@ git add .
 git commit -m "Initial commit"
 
 # Conectar con GitHub (crea un repo vacío primero en github.com)
-git remote add origin https://github.com/TU_USUARIO/sportwear-store.git
+git remote add origin https://github.com/TU_USUARIO/golazo-store.git
 git branch -M main
 git push -u origin main
 ```
@@ -218,7 +218,7 @@ git push -u origin main
 3. Haz clic en **"Create a project"**
 4. Selecciona **"Connect to Git"**
 5. Autoriza Cloudflare para acceder a tu GitHub
-6. Selecciona el repositorio `sportwear-store`
+6. Selecciona el repositorio `golazo-store`
 
 ### 5.3 Configurar el Build
 
@@ -250,7 +250,7 @@ En la pantalla de configuración del build, completa:
 ### 5.5 Verificar el Deploy
 
 1. Espera a que el deploy termine
-2. Cloudflare te dará una URL como: `https://sportwear-store.pages.dev`
+2. Cloudflare te dará una URL como: `https://golazo-store.pages.dev`
 3. Ábrela y verifica que la tienda carga correctamente
 
 ### 5.6 Deploys Automáticos

@@ -8,11 +8,11 @@ interface BusinessContextType {
 }
 
 const defaultSettings: BusinessSettings = {
-  business_name: 'SportWear Store',
+  business_name: 'Golazo Store',
   whatsapp_number: '5351234567',
-  email: 'contacto@sportwear.com',
+  email: 'contacto@golazostore.com',
   address: 'La Habana, Cuba',
-  description: 'Las mejores camisetas deportivas al mejor precio. Envíos a toda Cuba.',
+  description: 'Las mejores camisetas de fútbol al mejor precio. Envíos a toda Cuba. ⚽',
   instagram: '',
   facebook: '',
   telegram: '',

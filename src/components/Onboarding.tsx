@@ -6,14 +6,14 @@ const Onboarding: React.FC = () => {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const seen = localStorage.getItem('sportwear_onboarding_v3');
+    const seen = localStorage.getItem('golazo_onboarding_v4');
     if (!seen) {
       setTimeout(() => setShow(true), 1000);
     }
   }, []);
 
   const close = () => {
-    localStorage.setItem('sportwear_onboarding_v3', 'true');
+    localStorage.setItem('golazo_onboarding_v4', 'true');
     setShow(false);
   };
 

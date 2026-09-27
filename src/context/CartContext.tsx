@@ -16,7 +16,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
-      const saved = localStorage.getItem('sportwear_cart');
+      const saved = localStorage.getItem('golazo_cart');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -24,7 +24,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   useEffect(() => {
-    localStorage.setItem('sportwear_cart', JSON.stringify(items));
+    localStorage.setItem('golazo_cart', JSON.stringify(items));
   }, [items]);
 
   const addToCart = (product: Product, variant: ProductVariant, size: string) => {

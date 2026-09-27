@@ -273,7 +273,7 @@ const AdminDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-coral-500 to-coral-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">SW</span>
+              <span className="text-white text-xs">⚽</span>
             </div>
             <span className="font-bold text-navy-900 hidden sm:block">Admin Panel</span>
           </div>
