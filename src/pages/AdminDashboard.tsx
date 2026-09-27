@@ -168,6 +168,29 @@ const AdminDashboard: React.FC = () => {
 
   const deleteProduct = async (id: string) => {
     if (!confirm('¿Eliminar este producto?')) return;
+    
+    // Obtener las imágenes del producto antes de eliminarlo
+    const product = products.find(p => p.id === id);
+    if (product && product.images) {
+      // Eliminar imágenes del storage bucket
+      const fileNames = product.images
+        .map(img => {
+          const urlParts = img.image_url.split('/');
+          return urlParts[urlParts.length - 1];
+        })
+        .filter(Boolean);
+      
+      if (fileNames.length > 0) {
+        try {
+          await supabase.storage.from('products').remove(fileNames);
+        } catch (err) {
+          console.error('Error eliminando imágenes del storage:', err);
+        }
+      }
+    }
+    
+    // Eliminar de la base de datos
+    await supabase.from('product_images').delete().eq('product_id', id);
     await supabase.from('product_variants').delete().eq('product_id', id);
     await supabase.from('products').delete().eq('id', id);
     loadProducts();
@@ -261,8 +284,33 @@ const AdminDashboard: React.FC = () => {
     }
   };
   
-  const removeImage = (index: number) => {
+  const removeImage = async (index: number) => {
+    const imageToRemove = productImages[index];
+    
+    // Eliminar del storage bucket
+    if (imageToRemove && imageToRemove.url) {
+      try {
+        // Extraer el path del archivo desde la URL
+        const urlParts = imageToRemove.url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        if (fileName) {
+          const { error } = await supabase.storage
+            .from('products')
+            .remove([fileName]);
+          
+          if (error) {
+            console.error('Error eliminando imagen del storage:', error);
+          }
+        }
+      } catch (err) {
+        console.error('Error al eliminar imagen:', err);
+      }
+    }
+    
+    // Eliminar de la lista local
     setProductImages(prev => prev.filter((_, i) => i !== index));
+    
     // Si era la primera imagen, actualizar image_url
     if (index === 0 && productImages.length > 1) {
       setPForm(prev => ({ ...prev, image_url: productImages[1].url }));
