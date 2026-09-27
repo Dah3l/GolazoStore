@@ -48,7 +48,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
     msg += `━━━━━━━━━━━━━━━\n`;
     items.forEach((item, i) => {
       msg += `${i + 1}. ${item.product.name}\n`;
-      msg += `   👕 Jugador: ${item.variant.player_name}\n`;
+      if (item.product.team) {
+        msg += `   ⚽ Equipo: ${item.product.team}\n`;
+      }
+      if (item.variant.player_name && item.variant.player_name !== 'Sin personalizar') {
+        msg += `   👕 Jugador: ${item.variant.player_name}\n`;
+      }
       msg += `   📏 Talla: ${item.size}\n`;
       msg += `   🔢 Cantidad: ${item.quantity}\n`;
       msg += `   💰 Precio: $${item.product.price * item.quantity} USD\n\n`;

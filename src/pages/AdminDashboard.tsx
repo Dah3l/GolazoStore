@@ -24,8 +24,11 @@ const AdminDashboard: React.FC = () => {
     name: '', team: '', price: '', original_price: '', image_url: '', is_preorder: false, delivery_days: ''
   });
   const [pVariants, setPVariants] = useState<{player_name: string; sizes: string[]; stock: number}[]>([]);
-  const [newVariant, setNewVariant] = useState({ player_name: '', sizes: '', stock: '' });
+  const [newVariant, setNewVariant] = useState({ player_name: '', selectedSizes: [] as string[], stock: '' });
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
   // Zone form
   const [zForm, setZForm] = useState({ name: '', price: '' });
@@ -88,40 +91,53 @@ const AdminDashboard: React.FC = () => {
 
   const saveProduct = async () => {
     if (!pForm.name || !pForm.price) return;
-    const productData = {
-      name: pForm.name,
-      team: pForm.team,
-      price: Number(pForm.price),
-      original_price: pForm.original_price ? Number(pForm.original_price) : null,
-      image_url: pForm.image_url,
-      is_preorder: pForm.is_preorder,
-      delivery_days: pForm.delivery_days ? Number(pForm.delivery_days) : null,
-    };
+    if (saving) return;
+    
+    setSaving(true);
+    
+    try {
+      const productData = {
+        name: pForm.name,
+        team: pForm.team,
+        price: Number(pForm.price),
+        original_price: pForm.original_price ? Number(pForm.original_price) : null,
+        image_url: pForm.image_url,
+        is_preorder: pForm.is_preorder,
+        delivery_days: pForm.delivery_days ? Number(pForm.delivery_days) : null,
+      };
 
-    let productId: string;
-    if (editingProduct) {
-      const { error } = await supabase.from('products').update(productData).eq('id', editingProduct.id);
-      if (error) { alert('Error: ' + error.message); return; }
-      productId = editingProduct.id;
-      await supabase.from('product_variants').delete().eq('product_id', productId);
-    } else {
-      const { data, error } = await supabase.from('products').insert(productData).select().single();
-      if (error) { alert('Error: ' + error.message); return; }
-      productId = data.id;
+      let productId: string;
+      if (editingProduct) {
+        const { error } = await supabase.from('products').update(productData).eq('id', editingProduct.id);
+        if (error) { alert('Error: ' + error.message); setSaving(false); return; }
+        productId = editingProduct.id;
+        await supabase.from('product_variants').delete().eq('product_id', productId);
+      } else {
+        const { data, error } = await supabase.from('products').insert(productData).select().single();
+        if (error) { alert('Error: ' + error.message); setSaving(false); return; }
+        productId = data.id;
+      }
+
+      // Save variants (only if not preorder)
+      if (!pForm.is_preorder) {
+        for (const v of pVariants) {
+          await supabase.from('product_variants').insert({
+            product_id: productId,
+            player_name: v.player_name,
+            sizes: v.sizes,
+            stock: v.stock,
+          });
+        }
+      }
+
+      setShowProductModal(false);
+      await loadProducts();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Error inesperado al guardar el producto');
+    } finally {
+      setSaving(false);
     }
-
-    // Save variants
-    for (const v of pVariants) {
-      await supabase.from('product_variants').insert({
-        product_id: productId,
-        player_name: v.player_name,
-        sizes: v.sizes,
-        stock: v.stock,
-      });
-    }
-
-    setShowProductModal(false);
-    loadProducts();
   };
 
   const deleteProduct = async (id: string) => {
@@ -132,13 +148,22 @@ const AdminDashboard: React.FC = () => {
   };
 
   const addVariant = () => {
-    if (!newVariant.player_name) return;
+    if (!newVariant.player_name || newVariant.selectedSizes.length === 0) return;
     setPVariants([...pVariants, {
       player_name: newVariant.player_name,
-      sizes: newVariant.sizes.split(',').map(s => s.trim()).filter(Boolean),
+      sizes: newVariant.selectedSizes,
       stock: Number(newVariant.stock) || 0,
     }]);
-    setNewVariant({ player_name: '', sizes: '', stock: '' });
+    setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
+  };
+  
+  const toggleSize = (size: string) => {
+    setNewVariant(prev => ({
+      ...prev,
+      selectedSizes: prev.selectedSizes.includes(size)
+        ? prev.selectedSizes.filter(s => s !== size)
+        : [...prev.selectedSizes, size]
+    }));
   };
 
   const removeVariant = (idx: number) => {
@@ -541,94 +566,135 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Variants */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                  <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">4</span>
-                  Variantes (Jugadores)
-                  <span className="text-xs font-normal text-gray-500 ml-auto">{pVariants.length} agregada{pVariants.length !== 1 ? 's' : ''}</span>
-                </h4>
+              {/* Variants - Solo visible si NO es por encargo */}
+              {!pForm.is_preorder ? (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                    Variantes (Jugadores)
+                    <span className="text-xs font-normal text-gray-500 ml-auto">{pVariants.length} agregada{pVariants.length !== 1 ? 's' : ''}</span>
+                  </h4>
 
-                {/* Existing variants */}
-                {pVariants.length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    {pVariants.map((v, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-gradient-to-r from-coral-50 to-white rounded-xl border border-coral-100">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-navy-900 text-sm truncate">{v.player_name}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-gray-600">
-                              <span className="font-medium">Tallas:</span> {v.sizes.join(', ')}
-                            </span>
-                            <span className="text-xs text-gray-600">
-                              <span className="font-medium">Stock:</span> {v.stock}
-                            </span>
+                  {/* Existing variants */}
+                  {pVariants.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {pVariants.map((v, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-gradient-to-r from-coral-50 to-white rounded-xl border border-coral-100">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-navy-900 text-sm truncate">{v.player_name}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-600">
+                                <span className="font-medium">Tallas:</span> {v.sizes.join(', ')}
+                              </span>
+                              <span className="text-xs text-gray-600">
+                                <span className="font-medium">Stock:</span> {v.stock}
+                              </span>
+                            </div>
                           </div>
+                          <button 
+                            onClick={() => removeVariant(i)} 
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors flex-shrink-0"
+                          >
+                            <X size={16} />
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => removeVariant(i)} 
-                          className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors flex-shrink-0"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
 
-                {/* Add new variant */}
-                <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 space-y-3">
-                  <p className="text-xs font-medium text-gray-600">Agregar nueva variante:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Nombre del jugador *</label>
-                      <input 
-                        value={newVariant.player_name} 
-                        onChange={e => setNewVariant({...newVariant, player_name: e.target.value})}
-                        onKeyDown={e => e.key === 'Enter' && addVariant()}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
-                        placeholder="Ej: Bellingham" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Tallas (separadas por coma)</label>
-                      <input 
-                        value={newVariant.sizes} 
-                        onChange={e => setNewVariant({...newVariant, sizes: e.target.value})}
-                        onKeyDown={e => e.key === 'Enter' && addVariant()}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
-                        placeholder="S, M, L, XL" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Stock disponible</label>
-                      <div className="flex gap-2">
+                  {/* Add new variant */}
+                  <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 space-y-3">
+                    <p className="text-xs font-medium text-gray-600">Agregar nueva variante:</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Nombre del jugador *</label>
+                        <input 
+                          value={newVariant.player_name} 
+                          onChange={e => setNewVariant({...newVariant, player_name: e.target.value})}
+                          onKeyDown={e => e.key === 'Enter' && addVariant()}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
+                          placeholder="Ej: Bellingham" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Stock disponible *</label>
                         <input 
                           type="number" 
                           value={newVariant.stock} 
                           onChange={e => setNewVariant({...newVariant, stock: e.target.value})}
                           onKeyDown={e => e.key === 'Enter' && addVariant()}
-                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
                           placeholder="10" />
-                        <button 
-                          onClick={addVariant}
-                          disabled={!newVariant.player_name}
-                          className="px-4 py-2 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Agregar
-                        </button>
                       </div>
                     </div>
+                    
+                    <div>
+                      <label className="text-xs text-gray-500 mb-2 block">Tallas disponibles * (selecciona una o más)</label>
+                      <div className="flex flex-wrap gap-2">
+                        {availableSizes.map(size => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => toggleSize(size)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
+                              newVariant.selectedSizes.includes(size)
+                                ? 'bg-coral-500 text-white border-coral-500 shadow-sm'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-coral-300'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                      {newVariant.selectedSizes.length > 0 && (
+                        <p className="text-xs text-coral-600 mt-2">
+                          ✓ {newVariant.selectedSizes.length} talla{newVariant.selectedSizes.length > 1 ? 's' : ''} seleccionada{newVariant.selectedSizes.length > 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <button 
+                      onClick={addVariant}
+                      disabled={!newVariant.player_name || newVariant.selectedSizes.length === 0 || !newVariant.stock}
+                      className="w-full py-2.5 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      + Agregar Variante
+                    </button>
                   </div>
-                  <p className="text-xs text-gray-500">💡 Tip: Presiona Enter para agregar rápidamente</p>
                 </div>
-              </div>
+              ) : (
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-600 text-sm">🕐</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-900 text-sm">Producto por encargo</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Las variantes (jugadores/tallas/stock) no están disponibles para productos por encargo. 
+                        Los clientes podrán seleccionar talla al hacer el pedido.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Save button */}
               <button 
                 onClick={saveProduct}
-                disabled={!pForm.name || !pForm.price}
+                disabled={!pForm.name || !pForm.price || saving}
                 className="w-full py-3.5 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-coral-500/30 flex items-center justify-center gap-2"
               >
-                <Save size={18} /> {editingProduct ? 'Actualizar' : 'Crear'} Producto
+                {saving ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} /> {editingProduct ? 'Actualizar' : 'Crear'} Producto
+                  </>
+                )}
               </button>
             </div>
           </div>
