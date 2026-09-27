@@ -62,23 +62,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
 
       {/* Content */}
       <div className="p-3 sm:p-4">
-        <h3 className="font-semibold text-navy-900 text-xs sm:text-sm mb-0.5 line-clamp-1">{product.name}</h3>
-        <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-1">{product.team}</p>
+        <h3 className="font-semibold text-navy-900 text-sm sm:text-base mb-0.5 line-clamp-1">{product.name}</h3>
+        <p className="text-xs sm:text-sm text-gray-500 mb-2 line-clamp-1">{product.team}</p>
 
         {/* Price */}
         <div className="mb-2">
           {hasSale ? (
             <div className="flex items-baseline gap-1.5">
-              <span className="text-base sm:text-lg font-bold text-coral-600">${product.price}</span>
-              <span className="text-xs text-gray-400 line-through">${product.original_price}</span>
+              <span className="text-lg sm:text-xl font-bold text-coral-600">${product.price}</span>
+              <span className="text-sm text-gray-400 line-through">${product.original_price}</span>
             </div>
           ) : (
-            <span className="text-base sm:text-lg font-bold text-navy-900">${product.price} USD</span>
+            <span className="text-lg sm:text-xl font-bold text-navy-900">${product.price} USD</span>
           )}
         </div>
 
         {/* Variant info */}
-        <div className="text-[10px] sm:text-xs text-gray-500 mb-2.5 space-y-0.5">
+        <div className="text-xs sm:text-sm text-gray-500 mb-2.5 space-y-0.5">
           {product.variants && product.variants.length > 0 && (
             <p>* {product.variants.length} jugador{product.variants.length > 1 ? 'es' : ''}</p>
           )}
@@ -90,16 +90,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
         {/* Button */}
         <button
           onClick={() => onSelect(product)}
-          className={`w-full py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-95 ${
+          className={`w-full py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 ${
             product.is_preorder
               ? 'bg-navy-50 text-navy-700 hover:bg-navy-100 border border-navy-200'
               : 'bg-coral-500 text-white hover:bg-coral-600 shadow-sm'
           }`}
         >
           {product.is_preorder ? (
-            <><Clock size={13} /> Encargo</>
+            <><Clock size={15} /> Encargo</>
           ) : (
-            <><ShoppingBag size={13} /> Elegir</>
+            <><ShoppingBag size={15} /> Elegir</>
           )}
         </button>
       </div>
