@@ -12,9 +12,11 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-coral-500 to-coral-600 rounded-xl flex items-center justify-center">
-                <span className="text-white text-sm">⚽</span>
-              </div>
+              <img 
+                src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/SAVE_20260927_150213.jpg" 
+                alt="Golazo Store" 
+                className="w-9 h-9 rounded-xl object-cover"
+              />
               <span className="font-bold text-lg">{settings.business_name}</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">{settings.description}</p>

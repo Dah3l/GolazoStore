@@ -397,9 +397,11 @@ const AdminDashboard: React.FC = () => {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-coral-500 to-coral-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xs">⚽</span>
-            </div>
+            <img 
+              src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/SAVE_20260927_150213.jpg" 
+              alt="Golazo Store" 
+              className="w-8 h-8 rounded-lg object-cover"
+            />
             <span className="font-bold text-navy-900 hidden sm:block">Admin Panel</span>
           </div>
           <button onClick={logout} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors">

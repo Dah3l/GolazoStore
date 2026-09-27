@@ -15,9 +15,11 @@ const Header: React.FC<HeaderProps> = ({ onCartOpen }) => {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-gradient-to-br from-coral-500 to-coral-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-sm">⚽</span>
-          </div>
+          <img 
+            src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/SAVE_20260927_150213.jpg" 
+            alt="Golazo Store" 
+            className="w-9 h-9 rounded-xl object-cover"
+          />
           <span className="font-bold text-navy-900 text-lg">{settings.business_name}</span>
         </div>
 
