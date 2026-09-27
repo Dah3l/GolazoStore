@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Product, ProductVariant, DeliveryZone, BusinessSettings } from '../types';
-import { Plus, Edit2, Trash2, LogOut, Package, Truck, Settings, Search, Upload, X, Save, ChevronDown } from 'lucide-react';
+import { Product, ProductVariant, DeliveryZone, BusinessSettings, ProductImage } from '../types';
+import { Plus, Edit2, Trash2, LogOut, Package, Truck, Settings, Search, Upload, X, Save, ChevronDown, Image as ImageIcon, GripVertical } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +27,7 @@ const AdminDashboard: React.FC = () => {
   const [newVariant, setNewVariant] = useState({ player_name: '', selectedSizes: [] as string[], stock: '' });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [productImages, setProductImages] = useState<{url: string; uploading?: boolean}[]>([]);
   
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
@@ -50,7 +51,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   const loadProducts = async () => {
-    const { data } = await supabase.from('products').select('*, variants:product_variants(*)').order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('products')
+      .select('*, variants:product_variants(*), images:product_images(*)')
+      .order('created_at', { ascending: false });
     if (data) setProducts(data);
   };
 
@@ -74,6 +78,7 @@ const AdminDashboard: React.FC = () => {
     setEditingProduct(null);
     setPForm({ name: '', team: '', price: '', original_price: '', image_url: '', is_preorder: false, delivery_days: '' });
     setPVariants([]);
+    setProductImages([]);
     setShowProductModal(true);
   };
 
@@ -86,6 +91,13 @@ const AdminDashboard: React.FC = () => {
       delivery_days: p.delivery_days ? String(p.delivery_days) : ''
     });
     setPVariants(p.variants?.map(v => ({ player_name: v.player_name, sizes: v.sizes, stock: v.stock })) || []);
+    // Cargar imágenes existentes
+    const images = p.images?.sort((a, b) => a.display_order - b.display_order).map(img => ({ url: img.image_url })) || [];
+    // Si no hay imágenes en la tabla nueva, usar la imagen legacy
+    if (images.length === 0 && p.image_url) {
+      images.push({ url: p.image_url });
+    }
+    setProductImages(images);
     setShowProductModal(true);
   };
 
@@ -96,12 +108,15 @@ const AdminDashboard: React.FC = () => {
     setSaving(true);
     
     try {
+      // Usar la primera imagen como image_url (compatibilidad)
+      const mainImageUrl = productImages.length > 0 ? productImages[0].url : pForm.image_url;
+      
       const productData = {
         name: pForm.name,
         team: pForm.team,
         price: Number(pForm.price),
         original_price: pForm.original_price ? Number(pForm.original_price) : null,
-        image_url: pForm.image_url,
+        image_url: mainImageUrl,
         is_preorder: pForm.is_preorder,
         delivery_days: pForm.delivery_days ? Number(pForm.delivery_days) : null,
       };
@@ -112,6 +127,8 @@ const AdminDashboard: React.FC = () => {
         if (error) { alert('Error: ' + error.message); setSaving(false); return; }
         productId = editingProduct.id;
         await supabase.from('product_variants').delete().eq('product_id', productId);
+        // Eliminar imágenes anteriores
+        await supabase.from('product_images').delete().eq('product_id', productId);
       } else {
         const { data, error } = await supabase.from('products').insert(productData).select().single();
         if (error) { alert('Error: ' + error.message); setSaving(false); return; }
@@ -128,6 +145,15 @@ const AdminDashboard: React.FC = () => {
             stock: v.stock,
           });
         }
+      }
+      
+      // Save images
+      for (let i = 0; i < productImages.length; i++) {
+        await supabase.from('product_images').insert({
+          product_id: productId,
+          image_url: productImages[i].url,
+          display_order: i,
+        });
       }
 
       setShowProductModal(false);
@@ -170,49 +196,90 @@ const AdminDashboard: React.FC = () => {
     setPVariants(pVariants.filter((_, i) => i !== idx));
   };
 
-  const uploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen válida');
-      return;
-    }
-    
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no debe superar los 5MB');
-      return;
-    }
+  const uploadImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     
     setUploading(true);
+    
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${Date.now()}.${ext}`;
+      const newImages: {url: string; uploading?: boolean}[] = [];
       
-      const { data, error } = await supabase.storage
-        .from('products')
-        .upload(path, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error('Error de subida:', error);
-        alert(`Error subiendo imagen: ${error.message}\n\nVerifica que:\n1. El bucket 'products' existe\n2. El bucket es público\n3. Ejecutaste supabase-storage-policies.sql`);
-        setUploading(false);
-        return;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validar tipo de archivo
+        if (!file.type.startsWith('image/')) {
+          alert(`El archivo ${file.name} no es una imagen válida`);
+          continue;
+        }
+        
+        // Validar tamaño (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`La imagen ${file.name} no debe superar los 5MB`);
+          continue;
+        }
+        
+        const ext = file.name.split('.').pop();
+        const path = `${Date.now()}_${i}.${ext}`;
+        
+        const { error } = await supabase.storage
+          .from('products')
+          .upload(path, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) {
+          console.error('Error de subida:', error);
+          alert(`Error subiendo ${file.name}: ${error.message}`);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage.from('products').getPublicUrl(path);
+        newImages.push({ url: urlData.publicUrl });
       }
       
-      const { data: urlData } = supabase.storage.from('products').getPublicUrl(path);
-      setPForm({ ...pForm, image_url: urlData.publicUrl });
-      alert('✅ Imagen subida correctamente');
+      // Agregar las nuevas imágenes a la lista
+      setProductImages(prev => [...prev, ...newImages]);
+      
+      // Actualizar también el campo legacy image_url con la primera imagen
+      if (newImages.length > 0 && !pForm.image_url) {
+        setPForm(prev => ({ ...prev, image_url: newImages[0].url }));
+      }
+      
+      if (newImages.length > 0) {
+        alert(`✅ ${newImages.length} imagen${newImages.length > 1 ? 'es' : ''} subida${newImages.length > 1 ? 's' : ''} correctamente`);
+      }
     } catch (err: any) {
       console.error('Error inesperado:', err);
-      alert('Error inesperado al subir la imagen');
+      alert('Error inesperado al subir las imágenes');
     } finally {
       setUploading(false);
+      // Resetear el input para permitir subir las mismas imágenes de nuevo
+      e.target.value = '';
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    setProductImages(prev => prev.filter((_, i) => i !== index));
+    // Si era la primera imagen, actualizar image_url
+    if (index === 0 && productImages.length > 1) {
+      setPForm(prev => ({ ...prev, image_url: productImages[1].url }));
+    } else if (productImages.length === 1) {
+      setPForm(prev => ({ ...prev, image_url: '' }));
+    }
+  };
+  
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= productImages.length) return;
+    const newImages = [...productImages];
+    const [moved] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, moved);
+    setProductImages(newImages);
+    // Actualizar image_url con la primera imagen
+    if (toIndex === 0 || fromIndex === 0) {
+      setPForm(prev => ({ ...prev, image_url: newImages[0].url }));
     }
   };
 
@@ -273,7 +340,7 @@ const AdminDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-coral-500 to-coral-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">SW</span>
+              <span className="text-white text-xs">⚽</span>
             </div>
             <span className="font-bold text-navy-900 hidden sm:block">Admin Panel</span>
           </div>
@@ -510,35 +577,70 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Image */}
+              {/* Images */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
                   <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                  Imagen del Producto
+                  Imágenes del Producto
+                  <span className="text-xs font-normal text-gray-500 ml-auto">{productImages.length} imagen{productImages.length !== 1 ? 'es' : ''}</span>
                 </h4>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input value={pForm.image_url} onChange={e => setPForm({...pForm, image_url: e.target.value})}
-                    className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
-                    placeholder="URL de imagen o sube un archivo" />
-                  <label className={`px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all flex items-center justify-center gap-2 ${
-                    uploading ? 'bg-gray-200 text-gray-500' : 'bg-coral-500 hover:bg-coral-600 text-white'
-                  }`}>
-                    <Upload size={16} /> {uploading ? 'Subiendo...' : 'Subir Imagen'}
-                    <input type="file" accept="image/*" onChange={uploadImage} className="hidden" disabled={uploading} />
-                  </label>
-                </div>
-                {pForm.image_url && (
-                  <div className="relative inline-block">
-                    <img src={pForm.image_url} alt="Preview" className="w-32 h-32 rounded-xl object-cover border-2 border-gray-200" />
-                    <button 
-                      onClick={() => setPForm({...pForm, image_url: ''})}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                    >
-                      <X size={14} />
-                    </button>
+                
+                {/* Upload button */}
+                <label className={`w-full py-3 rounded-xl text-sm font-medium cursor-pointer transition-all flex items-center justify-center gap-2 border-2 border-dashed ${
+                  uploading ? 'bg-gray-100 text-gray-500 border-gray-300' : 'bg-coral-50 text-coral-600 border-coral-200 hover:bg-coral-100'
+                }`}>
+                  <Upload size={16} /> 
+                  {uploading ? 'Subiendo imágenes...' : '📷 Subir imágenes (puedes seleccionar varias)'}
+                  <input type="file" accept="image/*" multiple onChange={uploadImages} className="hidden" disabled={uploading} />
+                </label>
+                
+                {/* Image gallery */}
+                {productImages.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500">💡 La primera imagen será la principal. Usa las flechas para reordenar.</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {productImages.map((img, index) => (
+                        <div key={index} className="relative group">
+                          <img src={img.url} alt={`Imagen ${index + 1}`} className="w-full h-28 sm:h-32 rounded-xl object-cover border-2 border-gray-200" />
+                          {index === 0 && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 bg-coral-500 text-white text-[10px] font-bold rounded-md">
+                              Principal
+                            </span>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all rounded-xl flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                            {index > 0 && (
+                              <button
+                                onClick={() => moveImage(index, index - 1)}
+                                className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                                title="Mover izquierda"
+                              >
+                                ←
+                              </button>
+                            )}
+                            {index < productImages.length - 1 && (
+                              <button
+                                onClick={() => moveImage(index, index + 1)}
+                                className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                                title="Mover derecha"
+                              >
+                                →
+                              </button>
+                            )}
+                            <button
+                              onClick={() => removeImage(index)}
+                              className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                              title="Eliminar imagen"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <p className="text-xs text-gray-500">💡 Tip: Puedes pegar una URL o subir una imagen desde tu dispositivo (máx. 5MB)</p>
+                
+                <p className="text-xs text-gray-500">💡 Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.</p>
               </div>
 
               {/* Availability */}

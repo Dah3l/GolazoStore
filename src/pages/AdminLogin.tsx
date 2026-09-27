@@ -39,7 +39,7 @@ const AdminLogin: React.FC = () => {
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-gradient-to-br from-coral-500 to-coral-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-lg">SW</span>
+            <span className="text-white text-lg">⚽</span>
           </div>
           <h1 className="text-2xl font-bold text-navy-900">Panel de Administración</h1>
           <p className="text-gray-500 text-sm mt-1">Inicia sesión para gestionar tu tienda</p>

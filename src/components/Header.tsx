@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ onCartOpen }) => {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 bg-gradient-to-br from-coral-500 to-coral-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-sm">SW</span>
+            <span className="text-white font-bold text-sm">⚽</span>
           </div>
           <span className="font-bold text-navy-900 text-lg">{settings.business_name}</span>
         </div>

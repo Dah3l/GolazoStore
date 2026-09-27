@@ -28,7 +28,7 @@ const Catalog: React.FC<CatalogProps> = ({ onSelectProduct }) => {
     try {
       const { data: productsData } = await supabase
         .from('products')
-        .select('*, variants:product_variants(*)')
+        .select('*, variants:product_variants(*), images:product_images(*)')
         .order('created_at', { ascending: false });
 
       if (productsData) {
