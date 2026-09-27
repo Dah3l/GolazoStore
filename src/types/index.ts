@@ -40,6 +40,17 @@ export interface DeliveryZone {
   price: number;
 }
 
+export interface DeliveryLocation {
+  nombre: string;
+  precio: number;
+}
+
+export interface DeliveryArea {
+  id: string;
+  nombre: string;
+  lugares: DeliveryLocation[];
+}
+
 export interface BusinessSettings {
   id?: string;
   business_name: string;

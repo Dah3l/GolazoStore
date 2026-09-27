@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useBusiness } from '../context/BusinessContext';
-import { DeliveryZone } from '../types';
+import { DeliveryArea } from '../types';
 import { supabase } from '../lib/supabase';
 import { X, MapPin, User, Phone, Clock, MessageSquare, Copy, Check } from 'lucide-react';
 
@@ -13,11 +13,12 @@ interface OrderFormProps {
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
   const { items, totalPrice, clearCart } = useCart();
   const { settings } = useBusiness();
-  const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [areas, setAreas] = useState<DeliveryArea[]>([]);
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    zone: '',
+    area: '',
+    place: '',
     address: '',
     pickupTime: '',
     notes: '',
@@ -25,7 +26,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    loadZones();
+    loadAreas();
   }, []);
 
   // Bloquear scroll del body cuando el modal está abierto
@@ -38,17 +39,35 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  const loadZones = async () => {
+  const loadAreas = async () => {
     try {
-      const { data } = await supabase.from('delivery_zones').select('*').order('name');
-      if (data) setZones(data);
+      const { data: areasData } = await supabase
+        .from('delivery_areas')
+        .select(`
+          id,
+          nombre,
+          lugares:delivery_places(id, nombre, precio)
+        `)
+        .order('nombre');
+      
+      if (areasData) {
+        setAreas(areasData.map(area => ({
+          id: area.id,
+          nombre: area.nombre,
+          lugares: area.lugares.map((lugar: any) => ({
+            nombre: lugar.nombre,
+            precio: lugar.precio
+          }))
+        })));
+      }
     } catch (e) {
-      console.log('No zones loaded');
+      console.log('No areas loaded');
     }
   };
 
-  const selectedZone = zones.find(z => z.id === form.zone);
-  const deliveryPrice = selectedZone?.price || 0;
+  const selectedArea = areas.find(a => a.id === form.area);
+  const selectedPlace = selectedArea?.lugares.find(l => l.nombre === form.place);
+  const deliveryPrice = selectedPlace?.precio || 0;
 
   const buildMessage = () => {
     let msg = `🛒 *NUEVO PEDIDO*\n\n`;
@@ -70,12 +89,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
     });
     msg += `━━━━━━━━━━━━━━━\n`;
     msg += `💵 *Subtotal:* $${totalPrice} USD\n`;
-    if (deliveryPrice > 0) {
-      msg += `🚚 *Envío (${selectedZone?.name}):* ${deliveryPrice} CUP\n`;
+    if (deliveryPrice > 0 && selectedArea && selectedPlace) {
+      msg += `🚚 *Envío:* ${deliveryPrice} CUP\n`;
+      msg += `📍 *Localidad:* ${selectedArea.nombre}\n`;
+      msg += `🏠 *Punto de entrega:* ${selectedPlace.nombre}\n`;
     }
-    if (form.address) msg += `📍 *Dirección:* ${form.address}\n`;
+    if (form.address) msg += `📝 *Dirección específica:* ${form.address}\n`;
     if (form.pickupTime) msg += `🕐 *Hora de retiro:* ${form.pickupTime}\n`;
-    if (form.notes) msg += `📝 *Notas:* ${form.notes}\n`;
+    if (form.notes) msg += `📋 *Notas:* ${form.notes}\n`;
     msg += `\n✅ ¡Gracias por tu compra!`;
     return msg;
   };
@@ -161,32 +182,53 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Zone */}
-          {zones.length > 0 && (
+          {/* Localidad */}
+          {areas.length > 0 && (
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-navy-900 mb-1.5">
-                <MapPin size={15} className="text-coral-500" /> Zona de entrega
+                <MapPin size={15} className="text-coral-500" /> Localidad
               </label>
               <select
-                value={form.zone}
-                onChange={e => setForm({ ...form, zone: e.target.value })}
+                value={form.area}
+                onChange={e => setForm({ ...form, area: e.target.value, place: '' })}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none transition-all text-sm bg-white"
               >
-                <option value="">Seleccionar zona...</option>
-                {zones.map(zone => (
-                  <option key={zone.id} value={zone.id}>
-                    {zone.name} - {zone.price} CUP
+                <option value="">Seleccionar localidad...</option>
+                {areas.map(area => (
+                  <option key={area.id} value={area.id}>
+                    {area.nombre}
                   </option>
                 ))}
               </select>
             </div>
           )}
 
-          {/* Address */}
-          {form.zone && (
+          {/* Punto de entrega */}
+          {form.area && selectedArea && selectedArea.lugares.length > 0 && (
             <div className="animate-fade-in">
               <label className="flex items-center gap-2 text-sm font-medium text-navy-900 mb-1.5">
-                <MapPin size={15} className="text-coral-500" /> Dirección de entrega
+                <MapPin size={15} className="text-coral-500" /> Punto de entrega
+              </label>
+              <select
+                value={form.place}
+                onChange={e => setForm({ ...form, place: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none transition-all text-sm bg-white"
+              >
+                <option value="">Seleccionar punto de entrega...</option>
+                {selectedArea.lugares.map(lugar => (
+                  <option key={lugar.nombre} value={lugar.nombre}>
+                    {lugar.nombre} - {lugar.precio} CUP
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Dirección específica */}
+          {form.place && (
+            <div className="animate-fade-in">
+              <label className="flex items-center gap-2 text-sm font-medium text-navy-900 mb-1.5">
+                <MapPin size={15} className="text-coral-500" /> Dirección específica (opcional)
               </label>
               <input
                 type="text"
