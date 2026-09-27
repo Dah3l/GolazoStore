@@ -106,18 +106,18 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <div
-        className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto animate-slide-up"
+        className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[95vh] overflow-y-auto animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
-          <h2 className="font-bold text-navy-900 text-lg">Finalizar Pedido</h2>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <X size={20} className="text-gray-500" />
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center justify-between z-10">
+          <h2 className="font-bold text-navy-900 text-base sm:text-lg">Finalizar Pedido</h2>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors active:scale-95">
+            <X size={18} className="text-gray-500" />
           </button>
         </div>
 
-        <div className="px-5 py-5 space-y-4">
+        <div className="px-4 py-4 space-y-3 sm:space-y-4">
           {/* Name */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-navy-900 mb-1.5">

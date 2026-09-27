@@ -148,14 +148,47 @@ const AdminDashboard: React.FC = () => {
   const uploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona una imagen válida');
+      return;
+    }
+    
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no debe superar los 5MB');
+      return;
+    }
+    
     setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('products').upload(path, file);
-    if (error) { alert('Error subiendo imagen: ' + error.message); setUploading(false); return; }
-    const { data } = supabase.storage.from('products').getPublicUrl(path);
-    setPForm({ ...pForm, image_url: data.publicUrl });
-    setUploading(false);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}.${ext}`;
+      
+      const { data, error } = await supabase.storage
+        .from('products')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('Error de subida:', error);
+        alert(`Error subiendo imagen: ${error.message}\n\nVerifica que:\n1. El bucket 'products' existe\n2. El bucket es público\n3. Ejecutaste supabase-storage-policies.sql`);
+        setUploading(false);
+        return;
+      }
+      
+      const { data: urlData } = supabase.storage.from('products').getPublicUrl(path);
+      setPForm({ ...pForm, image_url: urlData.publicUrl });
+      alert('✅ Imagen subida correctamente');
+    } catch (err: any) {
+      console.error('Error inesperado:', err);
+      alert('Error inesperado al subir la imagen');
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Zone CRUD
@@ -404,91 +437,198 @@ const AdminDashboard: React.FC = () => {
 
       {/* Product Modal */}
       {showProductModal && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 pt-10" onClick={() => setShowProductModal(false)}>
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="relative bg-white rounded-2xl w-full max-w-lg p-6 mb-10 animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center overflow-y-auto" onClick={() => setShowProductModal(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-3xl max-h-[95vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
               <h3 className="font-bold text-navy-900 text-lg">{editingProduct ? 'Editar' : 'Nuevo'} Producto</h3>
-              <button onClick={() => setShowProductModal(false)} className="p-2 rounded-lg hover:bg-gray-100"><X size={18} /></button>
+              <button onClick={() => setShowProductModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <X size={20} className="text-gray-500" />
+              </button>
             </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre *</label>
-                  <input value={pForm.name} onChange={e => setPForm({...pForm, name: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="Camiseta Local 2024" />
+
+            <div className="p-5 space-y-5">
+              {/* Basic Info */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  Información Básica
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1.5 block">Nombre del producto *</label>
+                    <input value={pForm.name} onChange={e => setPForm({...pForm, name: e.target.value})}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
+                      placeholder="Camiseta Local Real Madrid 2024" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1.5 block">Equipo</label>
+                    <input value={pForm.team} onChange={e => setPForm({...pForm, team: e.target.value})}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
+                      placeholder="Real Madrid" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Equipo</label>
-                  <input value={pForm.team} onChange={e => setPForm({...pForm, team: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="Real Madrid" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Precio (USD) *</label>
-                  <input type="number" value={pForm.price} onChange={e => setPForm({...pForm, price: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="20" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Precio Original (USD)</label>
-                  <input type="number" value={pForm.original_price} onChange={e => setPForm({...pForm, original_price: e.target.value})}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="25 (opcional)" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1.5 block">Precio (USD) *</label>
+                    <input type="number" value={pForm.price} onChange={e => setPForm({...pForm, price: e.target.value})}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
+                      placeholder="20" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1.5 block">Precio Original (USD) <span className="text-gray-400">- solo si hay oferta</span></label>
+                    <input type="number" value={pForm.original_price} onChange={e => setPForm({...pForm, original_price: e.target.value})}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
+                      placeholder="25" />
+                  </div>
                 </div>
               </div>
 
               {/* Image */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Imagen</label>
-                <div className="flex gap-2">
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  Imagen del Producto
+                </h4>
+                <div className="flex flex-col sm:flex-row gap-3">
                   <input value={pForm.image_url} onChange={e => setPForm({...pForm, image_url: e.target.value})}
-                    className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="URL de imagen" />
-                  <label className="px-3 py-2 bg-gray-100 rounded-lg text-sm cursor-pointer hover:bg-gray-200 flex items-center gap-1">
-                    <Upload size={14} /> {uploading ? '...' : 'Subir'}
-                    <input type="file" accept="image/*" onChange={uploadImage} className="hidden" />
+                    className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-coral-400 focus:ring-2 focus:ring-coral-100 outline-none" 
+                    placeholder="URL de imagen o sube un archivo" />
+                  <label className={`px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all flex items-center justify-center gap-2 ${
+                    uploading ? 'bg-gray-200 text-gray-500' : 'bg-coral-500 hover:bg-coral-600 text-white'
+                  }`}>
+                    <Upload size={16} /> {uploading ? 'Subiendo...' : 'Subir Imagen'}
+                    <input type="file" accept="image/*" onChange={uploadImage} className="hidden" disabled={uploading} />
                   </label>
                 </div>
-                {pForm.image_url && <img src={pForm.image_url} alt="" className="mt-2 w-20 h-20 rounded-lg object-cover" />}
+                {pForm.image_url && (
+                  <div className="relative inline-block">
+                    <img src={pForm.image_url} alt="Preview" className="w-32 h-32 rounded-xl object-cover border-2 border-gray-200" />
+                    <button 
+                      onClick={() => setPForm({...pForm, image_url: ''})}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">💡 Tip: Puedes pegar una URL o subir una imagen desde tu dispositivo (máx. 5MB)</p>
               </div>
 
-              {/* Preorder toggle */}
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={pForm.is_preorder} onChange={e => setPForm({...pForm, is_preorder: e.target.checked})}
-                    className="w-4 h-4 accent-coral-500" />
-                  <span className="text-sm font-medium text-gray-700">Por encargo</span>
-                </label>
-                {pForm.is_preorder && (
-                  <input type="number" value={pForm.delivery_days} onChange={e => setPForm({...pForm, delivery_days: e.target.value})}
-                    className="w-20 px-2 py-1.5 rounded-lg border border-gray-200 text-sm" placeholder="Días" />
-                )}
+              {/* Availability */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                  Disponibilidad
+                </h4>
+                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                  <label className="flex items-center gap-2 cursor-pointer flex-1">
+                    <input type="checkbox" checked={pForm.is_preorder} onChange={e => setPForm({...pForm, is_preorder: e.target.checked})}
+                      className="w-5 h-5 accent-coral-500 rounded" />
+                    <div>
+                      <span className="text-sm font-medium text-gray-700 block">Producto por encargo</span>
+                      <span className="text-xs text-gray-500">Marca si es preventa o bajo pedido</span>
+                    </div>
+                  </label>
+                  {pForm.is_preorder && (
+                    <div className="flex items-center gap-2">
+                      <input type="number" value={pForm.delivery_days} onChange={e => setPForm({...pForm, delivery_days: e.target.value})}
+                        className="w-20 px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="7" />
+                      <span className="text-xs text-gray-500">días</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Variants */}
-              <div className="border-t border-gray-100 pt-3">
-                <p className="text-xs font-medium text-gray-600 mb-2">Variantes (Jugadores/Tallas/Stock)</p>
-                {pVariants.map((v, i) => (
-                  <div key={i} className="flex items-center gap-2 mb-2 p-2 bg-gray-50 rounded-lg">
-                    <span className="text-sm flex-1 truncate">{v.player_name} - {v.sizes.join(',')} - Stock: {v.stock}</span>
-                    <button onClick={() => removeVariant(i)} className="text-red-500 p-1"><X size={14} /></button>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-navy-900 flex items-center gap-2">
+                  <span className="w-6 h-6 bg-coral-100 text-coral-600 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                  Variantes (Jugadores)
+                  <span className="text-xs font-normal text-gray-500 ml-auto">{pVariants.length} agregada{pVariants.length !== 1 ? 's' : ''}</span>
+                </h4>
+
+                {/* Existing variants */}
+                {pVariants.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {pVariants.map((v, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-gradient-to-r from-coral-50 to-white rounded-xl border border-coral-100">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-navy-900 text-sm truncate">{v.player_name}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-gray-600">
+                              <span className="font-medium">Tallas:</span> {v.sizes.join(', ')}
+                            </span>
+                            <span className="text-xs text-gray-600">
+                              <span className="font-medium">Stock:</span> {v.stock}
+                            </span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => removeVariant(i)} 
+                          className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors flex-shrink-0"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <input value={newVariant.player_name} onChange={e => setNewVariant({...newVariant, player_name: e.target.value})}
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs" placeholder="Jugador" />
-                  <input value={newVariant.sizes} onChange={e => setNewVariant({...newVariant, sizes: e.target.value})}
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs" placeholder="S,M,L,XL" />
-                  <div className="flex gap-1">
-                    <input type="number" value={newVariant.stock} onChange={e => setNewVariant({...newVariant, stock: e.target.value})}
-                      className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" placeholder="Stock" />
-                    <button onClick={addVariant} className="px-2 py-1.5 bg-coral-500 text-white rounded-lg text-xs">+</button>
+                )}
+
+                {/* Add new variant */}
+                <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 space-y-3">
+                  <p className="text-xs font-medium text-gray-600">Agregar nueva variante:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Nombre del jugador *</label>
+                      <input 
+                        value={newVariant.player_name} 
+                        onChange={e => setNewVariant({...newVariant, player_name: e.target.value})}
+                        onKeyDown={e => e.key === 'Enter' && addVariant()}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
+                        placeholder="Ej: Bellingham" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Tallas (separadas por coma)</label>
+                      <input 
+                        value={newVariant.sizes} 
+                        onChange={e => setNewVariant({...newVariant, sizes: e.target.value})}
+                        onKeyDown={e => e.key === 'Enter' && addVariant()}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
+                        placeholder="S, M, L, XL" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Stock disponible</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="number" 
+                          value={newVariant.stock} 
+                          onChange={e => setNewVariant({...newVariant, stock: e.target.value})}
+                          onKeyDown={e => e.key === 'Enter' && addVariant()}
+                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-coral-400 outline-none" 
+                          placeholder="10" />
+                        <button 
+                          onClick={addVariant}
+                          disabled={!newVariant.player_name}
+                          className="px-4 py-2 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Agregar
+                        </button>
+                      </div>
+                    </div>
                   </div>
+                  <p className="text-xs text-gray-500">💡 Tip: Presiona Enter para agregar rápidamente</p>
                 </div>
               </div>
 
-              <button onClick={saveProduct}
-                className="w-full py-3 bg-coral-500 hover:bg-coral-600 text-white font-semibold rounded-xl mt-4 flex items-center justify-center gap-2">
-                <Save size={16} /> {editingProduct ? 'Actualizar' : 'Crear'} Producto
+              {/* Save button */}
+              <button 
+                onClick={saveProduct}
+                disabled={!pForm.name || !pForm.price}
+                className="w-full py-3.5 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-coral-500/30 flex items-center justify-center gap-2"
+              >
+                <Save size={18} /> {editingProduct ? 'Actualizar' : 'Crear'} Producto
               </button>
             </div>
           </div>
