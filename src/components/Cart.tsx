@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 
@@ -10,6 +10,16 @@ interface CartProps {
 
 const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
   const { items, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
+
+  // Bloquear scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
