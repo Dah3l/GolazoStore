@@ -1,9 +1,11 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
+import { useScrollPosition } from '../hooks/useScrollPosition';
 
 const WhatsAppButton: React.FC = () => {
   const { settings } = useBusiness();
+  const isNearFooter = useScrollPosition();
 
   const handleClick = () => {
     let phone = settings.whatsapp_number.replace(/\s/g, '');
@@ -25,7 +27,9 @@ const WhatsAppButton: React.FC = () => {
   return (
     <button
       onClick={handleClick}
-      className="fixed bottom-4 left-4 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group active:scale-95"
+      className={`fixed bottom-4 left-4 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group active:scale-95 ${
+        isNearFooter ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'
+      }`}
       title="Contactar por WhatsApp"
       aria-label="Contactar por WhatsApp"
     >
