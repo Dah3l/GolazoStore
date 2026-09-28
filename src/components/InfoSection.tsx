@@ -12,7 +12,6 @@ const InfoSection: React.FC = () => {
     { q: '¿Cuánto tarda la entrega?', a: 'Los productos en stock se entregan en 24-48 horas. Los productos por encargo tardan según lo indicado en cada producto.' },
     { q: '¿Qué métodos de pago aceptan?', a: 'Aceptamos transferencia, efectivo y pago móvil. Coordina el método al confirmar tu pedido por WhatsApp.' },
     { q: '¿Puedo cambiar o devolver un producto?', a: 'Sí, tienes 48 horas para solicitar un cambio si el producto tiene algún defecto. Contáctanos por WhatsApp.' },
-    { q: '¿Hacen envíos a todas las provincias?', a: 'Sí, realizamos envíos a todo el país. El costo varía según la zona de entrega.' },
   ];
 
   return (
