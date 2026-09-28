@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Wifi, Shield, Globe, Smartphone } from 'lucide-react';
+import { useScrollPosition } from '../hooks/useScrollPosition';
 
 const ConnectionHelp: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const isNearFooter = useScrollPosition();
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -21,10 +23,12 @@ const ConnectionHelp: React.FC = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 bg-coral-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-coral-600 transition-colors text-sm font-medium flex items-center gap-2"
+        className={`fixed bottom-4 right-4 z-50 bg-coral-500 text-white px-3 py-1.5 rounded-full shadow-lg hover:bg-coral-600 transition-all duration-300 text-xs font-medium flex items-center gap-1.5 ${
+          isNearFooter ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'
+        }`}
       >
-        <Wifi size={16} />
-        ¿Problemas de conexión?
+        <Wifi size={14} />
+        <span>¿Problemas?</span>
       </button>
     );
   }
