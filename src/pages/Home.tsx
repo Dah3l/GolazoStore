@@ -9,6 +9,7 @@ import OrderForm from '../components/OrderForm';
 import InfoSection from '../components/InfoSection';
 import Footer from '../components/Footer';
 import Onboarding from '../components/Onboarding';
+import ConnectionHelp from '../components/ConnectionHelp';
 
 const Home: React.FC = () => {
   const [cartOpen, setCartOpen] = useState(false);
@@ -35,6 +36,7 @@ const Home: React.FC = () => {
       <Cart isOpen={cartOpen} onClose={() => setCartOpen(false)} onCheckout={handleCheckout} />
       <OrderForm isOpen={orderOpen} onClose={() => setOrderOpen(false)} />
       <Onboarding />
+      <ConnectionHelp />
     </div>
   );
 };
