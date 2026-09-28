@@ -10,6 +10,7 @@ import InfoSection from '../components/InfoSection';
 import Footer from '../components/Footer';
 import Onboarding from '../components/Onboarding';
 import ConnectionHelp from '../components/ConnectionHelp';
+import WhatsAppButton from '../components/WhatsAppButton';
 
 const Home: React.FC = () => {
   const [cartOpen, setCartOpen] = useState(false);
@@ -37,6 +38,7 @@ const Home: React.FC = () => {
       <OrderForm isOpen={orderOpen} onClose={() => setOrderOpen(false)} />
       <Onboarding />
       <ConnectionHelp />
+      <WhatsAppButton />
     </div>
   );
 };
