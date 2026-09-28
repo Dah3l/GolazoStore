@@ -4,6 +4,7 @@ import { X, ChevronRight, ShoppingBag, Search, Filter, ShoppingCart, MessageSqua
 const Onboarding: React.FC = () => {
   const [show, setShow] = useState(false);
   const [step, setStep] = useState(0);
+  const [showSiuuu, setShowSiuuu] = useState(false);
 
   useEffect(() => {
     const seen = localStorage.getItem('golazo_onboarding_v5');
@@ -14,7 +15,7 @@ const Onboarding: React.FC = () => {
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
-    if (show) {
+    if (show || showSiuuu) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -23,11 +24,21 @@ const Onboarding: React.FC = () => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [show]);
+  }, [show, showSiuuu]);
 
   const close = () => {
     localStorage.setItem('golazo_onboarding_v5', 'true');
     setShow(false);
+  };
+
+  const finishOnboarding = () => {
+    setShow(false);
+    setShowSiuuu(true);
+    
+    // Ocultar la animación después de 3 segundos
+    setTimeout(() => {
+      setShowSiuuu(false);
+    }, 3000);
   };
 
   const steps = [
@@ -99,7 +110,7 @@ const Onboarding: React.FC = () => {
           <button
             onClick={() => {
               if (step < steps.length - 1) setStep(step + 1);
-              else close();
+              else finishOnboarding();
             }}
             className="flex-1 max-w-[200px] px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 hover:from-coral-600 hover:to-coral-700 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-coral-500/30 flex items-center justify-center gap-2"
           >
@@ -108,6 +119,52 @@ const Onboarding: React.FC = () => {
           </button>
         </div>
       </div>
+      
+      {/* Animación SIUUU */}
+      {showSiuuu && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center pointer-events-none">
+          {/* Fondo oscuro semitransparente */}
+          <div className="absolute inset-0 bg-black/70 animate-fade-in" />
+          
+          {/* Confeti/Partículas */}
+          <div className="absolute inset-0 overflow-hidden">
+            {[...Array(50)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-2 h-2 rounded-full animate-confetti"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181'][Math.floor(Math.random() * 5)],
+                  animationDelay: `${Math.random() * 0.5}s`,
+                  animationDuration: `${2 + Math.random() * 1}s`
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Contenido principal */}
+          <div className="relative text-center animate-siuuu-entrance">
+            {/* Emoji saltando */}
+            <div className="text-8xl mb-4 animate-bounce-siuuu">🕺</div>
+            
+            {/* Texto SIUUU */}
+            <div className="relative">
+              <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-coral-500 to-coral-600 animate-siuuu-text drop-shadow-2xl">
+                SIUUU!!!
+              </h1>
+              {/* Efecto de brillo */}
+              <div className="absolute inset-0 text-7xl md:text-9xl font-black text-white/20 blur-sm animate-pulse">
+                SIUUU!!!
+              </div>
+            </div>
+            
+            {/* Subtítulo */}
+            <p className="text-2xl md:text-3xl font-bold text-white mt-4 animate-fade-in-delay">
+              ¡Bienvenido a Golazo Store! ⚽
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
