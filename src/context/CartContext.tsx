@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CartItem, Product, ProductVariant } from '../types';
+import { useSiuuuSound } from '../hooks/useSiuuuSound';
 
 interface CartContextType {
   items: CartItem[];
@@ -23,6 +24,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   });
 
+  const { playSiuuu } = useSiuuuSound();
+
   useEffect(() => {
     localStorage.setItem('golazo_cart', JSON.stringify(items));
   }, [items]);
@@ -40,6 +43,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             : item
         );
       }
+      // Es un producto nuevo, reproducir sonido SIUUU
+      playSiuuu();
       return [...prev, { product, variant, size, quantity: 1 }];
     });
   };
