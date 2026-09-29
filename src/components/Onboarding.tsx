@@ -87,7 +87,7 @@ const Onboarding: React.FC = () => {
             {/* Imagen de CR7 saltando */}
             <div className="mb-4 animate-bounce-siuuu">
               <img 
-                src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/SAVE_20260927_150213.jpg" 
+                src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/IMG_20260928_193608.png" 
                 alt="CR7 SIUUU" 
                 className="max-w-[200px] md:max-w-[280px] h-auto object-contain"
               />
