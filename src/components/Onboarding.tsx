@@ -10,6 +10,10 @@ const Onboarding: React.FC = () => {
     const seen = localStorage.getItem('golazo_onboarding_v5');
     if (!seen) {
       setTimeout(() => setShow(true), 1000);
+      
+      // Precargar la imagen de CR7 en background (solo si se va a mostrar el onboarding)
+      const img = new Image();
+      img.src = 'https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/IMG_20260928_193608.png';
     }
   }, []);
 
