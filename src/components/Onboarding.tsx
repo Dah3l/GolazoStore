@@ -84,8 +84,14 @@ const Onboarding: React.FC = () => {
           
           {/* Contenido principal */}
           <div className="relative text-center animate-siuuu-entrance">
-            {/* Emoji saltando */}
-            <div className="text-8xl mb-4 animate-bounce-siuuu">🕺</div>
+            {/* Imagen de CR7 saltando */}
+            <div className="mb-4 animate-bounce-siuuu">
+              <img 
+                src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/SAVE_20260927_150213.jpg" 
+                alt="CR7 SIUUU" 
+                className="w-48 h-48 md:w-64 md:h-64 object-contain drop-shadow-2xl"
+              />
+            </div>
             
             {/* Texto SIUUU */}
             <div className="relative">
