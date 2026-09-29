@@ -89,7 +89,7 @@ const Onboarding: React.FC = () => {
               <img 
                 src="https://yyfpiyjwtrrvrsbmtgog.supabase.co/storage/v1/object/public/products/Logo/SAVE_20260927_150213.jpg" 
                 alt="CR7 SIUUU" 
-                className="w-48 h-48 md:w-64 md:h-64 object-contain drop-shadow-2xl"
+                className="max-w-[200px] md:max-w-[280px] h-auto object-contain"
               />
             </div>
             
