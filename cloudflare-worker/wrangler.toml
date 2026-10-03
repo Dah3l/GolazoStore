@@ -1,0 +1,17 @@
+name = "keep-supabase-active"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Cron trigger: cada 3 días a las 00:00 UTC
+[triggers]
+crons = ["0 0 */3 * *"]
+
+# Variables de entorno
+[vars]
+SUPABASE_URL = "https://yyfpiyjwtrrvrsbmtgog.supabase.co"
+# IMPORTANTE: Reemplaza esto con tu anon key real
+SUPABASE_ANON_KEY = "TU_ANON_KEY_AQUI"
+
+# Configuración de logs
+[observability.logs]
+enabled = true

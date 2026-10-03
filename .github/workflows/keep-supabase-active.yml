@@ -1,0 +1,37 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Ejecutar cada 3 días a las 00:00 UTC
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Permitir ejecución manual
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+      
+      - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node keep-supabase-active.js
+      
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Supabase database pinged successfully!"
+      
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Failed to ping Supabase database"
