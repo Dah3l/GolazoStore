@@ -25,6 +25,7 @@ const AdminDashboard: React.FC = () => {
   });
   const [pVariants, setPVariants] = useState<{player_name: string; sizes: string[]; stock: number}[]>([]);
   const [newVariant, setNewVariant] = useState({ player_name: '', selectedSizes: [] as string[], stock: '' });
+  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [productImages, setProductImages] = useState<{url: string; uploading?: boolean}[]>([]);
@@ -106,6 +107,8 @@ const AdminDashboard: React.FC = () => {
     setPForm({ name: '', team: '', price: '', original_price: '', image_url: '', is_preorder: false, delivery_days: '' });
     setPVariants([]);
     setProductImages([]);
+    setEditingVariantIndex(null);
+    setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
     setShowProductModal(true);
   };
 
@@ -123,6 +126,8 @@ const AdminDashboard: React.FC = () => {
       images.push({ url: p.image_url });
     }
     setProductImages(images);
+    setEditingVariantIndex(null);
+    setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
     setShowProductModal(true);
   };
 
@@ -178,6 +183,8 @@ const AdminDashboard: React.FC = () => {
       }
 
       setShowProductModal(false);
+      setEditingVariantIndex(null);
+      setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
       await loadProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -216,12 +223,42 @@ const AdminDashboard: React.FC = () => {
 
   const addVariant = () => {
     if (!newVariant.player_name || newVariant.selectedSizes.length === 0) return;
-    setPVariants([...pVariants, {
-      player_name: newVariant.player_name,
-      sizes: newVariant.selectedSizes,
-      stock: Number(newVariant.stock) || 0,
-    }]);
+    
+    // Si estamos editando una variante existente, actualizarla
+    if (editingVariantIndex !== null) {
+      const updatedVariants = [...pVariants];
+      updatedVariants[editingVariantIndex] = {
+        player_name: newVariant.player_name,
+        sizes: newVariant.selectedSizes,
+        stock: Number(newVariant.stock) || 0,
+      };
+      setPVariants(updatedVariants);
+      setEditingVariantIndex(null);
+    } else {
+      // Si no, agregar una nueva variante
+      setPVariants([...pVariants, {
+        player_name: newVariant.player_name,
+        sizes: newVariant.selectedSizes,
+        stock: Number(newVariant.stock) || 0,
+      }]);
+    }
+    
     setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
+  };
+  
+  const editVariant = (index: number) => {
+    const variant = pVariants[index];
+    setNewVariant({
+      player_name: variant.player_name,
+      selectedSizes: variant.sizes,
+      stock: String(variant.stock),
+    });
+    setEditingVariantIndex(index);
+  };
+  
+  const cancelEditVariant = () => {
+    setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
+    setEditingVariantIndex(null);
   };
   
   const toggleSize = (size: string) => {
@@ -701,12 +738,20 @@ const AdminDashboard: React.FC = () => {
 
       {/* Product Modal */}
       {showProductModal && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center overflow-y-auto" onClick={() => setShowProductModal(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center overflow-y-auto" onClick={() => {
+          setShowProductModal(false);
+          setEditingVariantIndex(null);
+          setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
+        }}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-3xl max-h-[95vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
               <h3 className="font-bold text-navy-900 text-lg">{editingProduct ? 'Editar' : 'Nuevo'} Producto</h3>
-              <button onClick={() => setShowProductModal(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <button onClick={() => {
+                setShowProductModal(false);
+                setEditingVariantIndex(null);
+                setNewVariant({ player_name: '', selectedSizes: [], stock: '' });
+              }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 <X size={20} className="text-gray-500" />
               </button>
             </div>
@@ -840,7 +885,11 @@ const AdminDashboard: React.FC = () => {
                   {pVariants.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {pVariants.map((v, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 bg-gradient-to-r from-coral-50 to-white rounded-xl border border-coral-100">
+                        <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                          editingVariantIndex === i 
+                            ? 'bg-coral-100 border-coral-300 ring-2 ring-coral-200' 
+                            : 'bg-gradient-to-r from-coral-50 to-white border-coral-100'
+                        }`}>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-navy-900 text-sm truncate">{v.player_name}</p>
                             <div className="flex items-center gap-3 mt-1">
@@ -852,19 +901,35 @@ const AdminDashboard: React.FC = () => {
                               </span>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => removeVariant(i)} 
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors flex-shrink-0"
-                          >
-                            <X size={16} />
-                          </button>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button 
+                              onClick={() => editVariant(i)} 
+                              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                              title="Editar variante"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button 
+                              onClick={() => removeVariant(i)} 
+                              className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                              title="Eliminar variante"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <div className="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 space-y-3">
-                    <p className="text-xs font-medium text-gray-600">Agregar nueva variante:</p>
+                  <div className={`p-4 rounded-xl border-2 space-y-3 transition-all ${
+                    editingVariantIndex !== null 
+                      ? 'bg-blue-50 border-blue-300 border-solid' 
+                      : 'bg-gray-50 border-gray-200 border-dashed'
+                  }`}>
+                    <p className="text-xs font-medium text-gray-600">
+                      {editingVariantIndex !== null ? '✏️ Editando variante:' : 'Agregar nueva variante:'}
+                    </p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -913,13 +978,27 @@ const AdminDashboard: React.FC = () => {
                       )}
                     </div>
                     
-                    <button 
-                      onClick={addVariant}
-                      disabled={!newVariant.player_name || newVariant.selectedSizes.length === 0 || !newVariant.stock}
-                      className="w-full py-2.5 bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-                    >
-                      + Agregar Variante
-                    </button>
+                    <div className="flex gap-2">
+                      {editingVariantIndex !== null && (
+                        <button 
+                          onClick={cancelEditVariant}
+                          className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                      <button 
+                        onClick={addVariant}
+                        disabled={!newVariant.player_name || newVariant.selectedSizes.length === 0 || !newVariant.stock}
+                        className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                          editingVariantIndex !== null
+                            ? 'bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white'
+                            : 'bg-coral-500 hover:bg-coral-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white'
+                        }`}
+                      >
+                        {editingVariantIndex !== null ? '✓ Guardar Cambios' : '+ Agregar Variante'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
