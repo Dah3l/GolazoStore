@@ -4,6 +4,13 @@
 
 Supabase en el **plan gratuito** pausa automáticamente los proyectos después de **7 días sin actividad** en la base de datos. Este script ejecuta una consulta cada **3 días** para mantener tu proyecto activo.
 
+## ✅ Solución Implementada
+
+El script usa **fetch nativo de Node.js** (sin dependencias externas) para hacer una petición REST directa a Supabase. Esto es:
+- **Más rápido**: No necesita instalar paquetes
+- **Más simple**: Sin problemas de compatibilidad
+- **Más confiable**: No depende de versiones de librerías
+
 ---
 
 ## 🚀 Opción 1: GitHub Actions (Recomendada)
@@ -172,6 +179,17 @@ Cloudflare Dashboard → Workers & Pages → Tu Worker → Triggers
 ---
 
 ## 🛠️ Troubleshooting
+
+### ❌ Error: "Node.js detected but native WebSocket not found"
+
+**Causa**: La versión antigua del script usaba `@supabase/supabase-js` que requiere Node.js 22+
+
+**Solución**: ✅ **Ya corregido**. El script ahora usa `fetch` nativo sin dependencias. Solo haz commit y push de los cambios:
+```bash
+git add .
+git commit -m "Fix: usar fetch nativo en lugar de supabase-js"
+git push
+```
 
 ### ❌ Error: "SUPABASE_URL and SUPABASE_ANON_KEY must be set"
 
