@@ -1,31 +1,41 @@
-import { createClient } from '@supabase/supabase-js';
+// Script para mantener Supabase activo - Sin dependencias
+// Usa fetch nativo de Node.js (disponible desde Node 18+)
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('❌ Error: SUPABASE_URL and SUPABASE_ANON_KEY must be set');
   process.exit(1);
 }
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function keepAlive() {
   try {
     console.log('🔄 Pinging Supabase database...');
     
-    // Hacer una consulta simple para mantener la base de datos activa
-    const { data, error } = await supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true });
+    // Hacer una consulta REST directa a Supabase (sin cliente oficial)
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?select=id&limit=1`,
+      {
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
     
-    if (error) {
-      console.error('❌ Error querying database:', error.message);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error en la respuesta:', response.status, response.statusText);
+      console.error('Detalles:', errorText);
       process.exit(1);
     }
     
+    const data = await response.json();
     console.log('✅ Database ping successful!');
-    console.log(`📊 Total products in database: ${data || 0}`);
+    console.log(`📊 Productos encontrados: ${data.length}`);
     console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
     
   } catch (error) {
