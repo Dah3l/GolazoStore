@@ -25,7 +25,7 @@ const Cart: React.FC<CartProps> = ({ isOpen, onClose, onCheckout }) => {
 
   return (
     <div className="fixed inset-0 z-[90]" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40" />
       <div
         className="absolute right-0 top-0 h-full w-full sm:max-w-md bg-white shadow-2xl animate-slide-up"
         onClick={e => e.stopPropagation()}
