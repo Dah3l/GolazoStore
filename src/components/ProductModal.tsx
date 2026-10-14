@@ -143,7 +143,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-white w-full max-w-[400px] sm:max-w-[480px] max-h-[90vh] rounded-2xl overflow-hidden flex flex-col animate-fade-in shadow-2xl"
+        className="relative bg-white w-full max-w-[400px] sm:max-w-[480px] max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -286,7 +286,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
 
             {/* Selection */}
             {added ? (
-              <div className="text-center py-8 animate-fade-in">
+              <div className="text-center py-8">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Check size={32} className="text-green-600" />
                 </div>
