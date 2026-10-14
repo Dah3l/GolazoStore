@@ -140,7 +140,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/50" />
       <div
         className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[95vh] overflow-y-auto animate-slide-up"
         onClick={e => e.stopPropagation()}
