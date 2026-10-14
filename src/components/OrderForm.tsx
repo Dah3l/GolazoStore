@@ -205,7 +205,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
 
           {/* Punto de entrega */}
           {form.area && selectedArea && selectedArea.lugares.length > 0 && (
-            <div className="animate-fade-in">
+            <div>
               <label className="flex items-center gap-2 text-sm font-medium text-navy-900 mb-1.5">
                 <MapPin size={15} className="text-coral-500" /> Punto de entrega
               </label>
@@ -226,7 +226,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose }) => {
 
           {/* Dirección específica */}
           {form.place && (
-            <div className="animate-fade-in">
+            <div>
               <label className="flex items-center gap-2 text-sm font-medium text-navy-900 mb-1.5">
                 <MapPin size={15} className="text-coral-500" /> Dirección específica (opcional)
               </label>
