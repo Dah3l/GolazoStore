@@ -64,7 +64,7 @@ const Footer: React.FC = () => {
           <p className="text-sm text-gray-500 flex items-center gap-1">
             Hecho con <Heart size={12} className="text-coral-500" /> para nuestros clientes
           </p>
-          <a href="/admin/login" className="text-xs text-gray-600 hover:text-coral-400 transition-colors">
+          <a href="#/admin/login" className="text-xs text-gray-600 hover:text-coral-400 transition-colors">
             Admin
           </a>
         </div>
