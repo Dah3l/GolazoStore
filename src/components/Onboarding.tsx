@@ -119,7 +119,7 @@ const Onboarding: React.FC = () => {
       {/* Modal del Onboarding */}
       {show && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={close}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60" />
           <div
             className="relative bg-gradient-to-br from-white to-gray-50 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl animate-fade-in"
             onClick={e => e.stopPropagation()}
